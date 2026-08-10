@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+La Hoja de Ruta Pro: De To-Do List a Sistema Diario
+┌─────────────────────────────────────────────────────────┐
+│ FASE 1: Persistencia en Base de Datos (Supabase) │
+│ • Crear tabla 'tasks' en PostgreSQL. │
+│ • Conectar el cliente oficial de Supabase. │
+└────────────────────────────┬────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────┐
+│ FASE 2: API Routes y Server Actions (Next.js) │
+│ • Crear endpoints en src/app/api/tasks/route.ts. │
+│ • Validar payloads con TypeScript estricto. │
+└────────────────────────────┬────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────┐
+│ FASE 3: Asistente con IA (Google AI Studio / Gemini) │
+│ • Crear un endpoint /api/ai/prioritize. │
+│ • Enviar la lista de tareas a la IA para que las ordene │
+│ por prioridad según categorías o estimación de tiempo.│
+└────────────────────────────┬────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────────────────────────┐
+│ FASE 4: UI/UX con Tailwind v4 │
+│ • Indicadores de carga (loading states), manejo de │
+│ errores con try/catch y feedback visual. │
+└─────────────────────────────────────────────────────────┘
