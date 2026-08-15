@@ -299,24 +299,22 @@ export default function Home() {
             </div>
           </header>
 
-          {/* Formulario de captura rápida */}
-          <section className="bg-surface border border-border p-4 rounded-xl shadow-md space-y-3">
-            <div className="relative">
-              <AiTaskInput
-                value={inputTitle}
-                onChange={setInputTitle}
-                category={currentArea === "all" ? inputArea : currentArea}
-              />
-            </div>
+          {/* Formulario de captura rápida Notion-like */}
+          <section className="bg-surface border border-border p-3.5 sm:p-4 rounded-2xl shadow-xs space-y-3">
+            <AiTaskInput
+              value={inputTitle}
+              onChange={setInputTitle}
+              category={currentArea === "all" ? inputArea : currentArea}
+            />
 
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Área si está en 'all' */}
                 {currentArea === "all" && (
                   <select
                     value={inputArea}
                     onChange={(e) => setInputArea(e.target.value as AreaType)}
-                    className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer capitalize"
+                    className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer capitalize transition"
                   >
                     <option value="personal">Personal & AI</option>
                     <option value="trabajo">Trabajo</option>
@@ -331,7 +329,7 @@ export default function Home() {
                   value={currentHorizon === "all" ? inputHorizon : currentHorizon}
                   onChange={(e) => setInputHorizon(e.target.value as HorizonType)}
                   disabled={currentHorizon !== "all"}
-                  className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer disabled:opacity-60"
+                  className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer disabled:opacity-50 transition"
                 >
                   <option value="hoy">Horizonte: Hoy</option>
                   <option value="corto">Horizonte: Corto Plazo</option>
@@ -344,7 +342,7 @@ export default function Home() {
                 type="button"
                 onClick={handleAddTask}
                 disabled={loading || !inputTitle.trim()}
-                className="bg-text-primary text-canvas font-semibold px-4 py-1.5 rounded-lg text-xs hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-40"
+                className="self-end sm:self-auto bg-text-primary text-canvas font-semibold px-4 py-1.5 rounded-lg text-xs hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-40"
               >
                 {loading ? "Guardando..." : "Crear Entrada"}
               </button>
