@@ -8,13 +8,17 @@ interface EntryDetailDrawerProps {
   entry: EntryItem | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (updatedEntry: Partial<EntryItem> & { id: string }) => Promise<void>;
+  onUpdate: (
+    updatedEntry: Partial<EntryItem> & { id: string },
+  ) => Promise<void>;
 }
 
 interface EntryDetailFormProps {
   entry: EntryItem;
   onClose: () => void;
-  onUpdate: (updatedEntry: Partial<EntryItem> & { id: string }) => Promise<void>;
+  onUpdate: (
+    updatedEntry: Partial<EntryItem> & { id: string },
+  ) => Promise<void>;
 }
 
 function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
@@ -23,7 +27,9 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
   const [title, setTitle] = useState(entry.title);
   const [area, setArea] = useState<AreaType>(entry.area);
   const [horizon, setHorizon] = useState<HorizonType>(entry.horizon);
-  const [notes, setNotes] = useState(paragraphBlock ? paragraphBlock.content : "");
+  const [notes, setNotes] = useState(
+    paragraphBlock ? paragraphBlock.content : "",
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
@@ -32,7 +38,15 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
     try {
       const updatedContent = [
         ...(entry.content?.filter((b) => b.type !== "paragraph") || []),
-        ...(notes.trim() ? [{ id: "note-1", type: "paragraph" as const, content: notes.trim() }] : []),
+        ...(notes.trim()
+          ? [
+              {
+                id: "note-1",
+                type: "paragraph" as const,
+                content: notes.trim(),
+              },
+            ]
+          : []),
       ];
 
       await onUpdate({
@@ -69,7 +83,9 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
 
         {/* Título editable */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-text-muted">Título</label>
+          <label className="text-xs font-semibold text-text-muted">
+            Título
+          </label>
           <input
             type="text"
             value={title}
@@ -82,7 +98,9 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
         {/* Selectores de Área y Horizonte */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-text-muted">Área</label>
+            <label className="text-xs font-semibold text-text-muted">
+              Área
+            </label>
             <select
               value={area}
               onChange={(e) => setArea(e.target.value as AreaType)}
@@ -97,7 +115,9 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-text-muted">Horizonte</label>
+            <label className="text-xs font-semibold text-text-muted">
+              Horizonte
+            </label>
             <select
               value={horizon}
               onChange={(e) => setHorizon(e.target.value as HorizonType)}

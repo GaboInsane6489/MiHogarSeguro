@@ -35,20 +35,20 @@ export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
   };
 
   return (
-    <div className="relative flex items-center w-full">
+    <div className="relative w-full">
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Escribe una nota, tarea o idea..."
-        className="w-full bg-surface-subtle border border-border rounded-xl px-4 py-3 pr-12 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai/60 transition"
+        className="w-full bg-surface-subtle border border-border rounded-xl px-4 py-3 pr-11 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai transition-colors"
       />
       <button
         type="button"
         onClick={handleGenerateAI}
         disabled={loadingAI}
         title="Sugerir idea con Gemini AI"
-        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-ai hover:bg-ai/10 transition disabled:opacity-40 cursor-pointer flex items-center justify-center"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-ai hover:bg-ai/10 transition cursor-pointer flex items-center justify-center disabled:opacity-40"
       >
         {loadingAI ? (
           <Loader2 className="w-4 h-4 text-ai animate-spin" />

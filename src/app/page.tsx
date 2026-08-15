@@ -341,21 +341,21 @@ export default function Home() {
           </header>
 
           {/* Formulario de captura rápida Notion-like */}
-          <section className="bg-surface border border-border p-4 sm:p-5 rounded-2xl shadow-lg space-y-4 my-6">
+          <section className="bg-surface border border-border p-5 rounded-2xl shadow-lg my-6 space-y-4">
             <AiTaskInput
               value={inputTitle}
               onChange={setInputTitle}
               category={currentArea === "all" ? inputArea : currentArea}
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/40">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/50">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Área si está en 'all' */}
                 {currentArea === "all" && (
                   <select
                     value={inputArea}
                     onChange={(e) => setInputArea(e.target.value as AreaType)}
-                    className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer capitalize transition"
+                    className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer capitalize transition-colors"
                   >
                     <option value="personal">Personal & AI</option>
                     <option value="trabajo">Trabajo</option>
@@ -374,7 +374,7 @@ export default function Home() {
                     setInputHorizon(e.target.value as HorizonType)
                   }
                   disabled={currentHorizon !== "all"}
-                  className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer disabled:opacity-50 transition"
+                  className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   <option value="hoy">Horizonte: Hoy</option>
                   <option value="corto">Horizonte: Corto Plazo</option>
