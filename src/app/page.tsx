@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabaseClient } from "@/lib/supabase";
 import { Sidebar } from "@/components/Sidebar";
 import { AiTaskInput } from "@/components/AiTaskInput";
+import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
 import type { EntryItem, AreaType, HorizonType } from "@/types/database.types";
 import {
   Briefcase,
@@ -89,6 +90,7 @@ const HORIZON_LABELS: Record<
 export default function Home() {
   const [tasks, setTasks] = useState<EntryItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<EntryItem | null>(null);
 
   // Filtros de navegación
   const [currentArea, setCurrentArea] = useState<AreaType | "all">("all");
@@ -191,10 +193,41 @@ export default function Home() {
     }
   };
 
+  // Actualizar entrada completa desde el Drawer
+  const handleUpdateEntry = async (
+    updatedData: Partial<EntryItem> & { id: string },
+  ) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === updatedData.id ? { ...t, ...updatedData } : t)),
+    );
+
+    if (selectedEntry && selectedEntry.id === updatedData.id) {
+      setSelectedEntry((prev) => (prev ? { ...prev, ...updatedData } : null));
+    }
+
+    const { data, error } = await supabaseClient
+      .from("entries")
+      .update(updatedData)
+      .eq("id", updatedData.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error al actualizar la entrada:", error.message);
+    } else if (data) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === updatedData.id ? data : t)),
+      );
+    }
+  };
+
   // Eliminar entrada en Supabase
   const handleDeleteTask = async (idToDelete: string) => {
     // Actualización optimista
     setTasks((prev) => prev.filter((task) => task.id !== idToDelete));
+    if (selectedEntry?.id === idToDelete) {
+      setSelectedEntry(null);
+    }
 
     const { error } = await supabaseClient
       .from("entries")
@@ -308,7 +341,7 @@ export default function Home() {
           </header>
 
           {/* Formulario de captura rápida Notion-like */}
-          <section className="bg-surface border border-border p-5 rounded-2xl shadow-lg space-y-4 my-6">
+          <section className="bg-surface border border-border p-4 sm:p-5 rounded-2xl shadow-lg space-y-4 my-6">
             <AiTaskInput
               value={inputTitle}
               onChange={setInputTitle}
@@ -322,7 +355,7 @@ export default function Home() {
                   <select
                     value={inputArea}
                     onChange={(e) => setInputArea(e.target.value as AreaType)}
-                    className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer capitalize transition"
+                    className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer capitalize transition"
                   >
                     <option value="personal">Personal & AI</option>
                     <option value="trabajo">Trabajo</option>
@@ -341,7 +374,7 @@ export default function Home() {
                     setInputHorizon(e.target.value as HorizonType)
                   }
                   disabled={currentHorizon !== "all"}
-                  className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer disabled:opacity-50 transition"
+                  className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer disabled:opacity-50 transition"
                 >
                   <option value="hoy">Horizonte: Hoy</option>
                   <option value="corto">Horizonte: Corto Plazo</option>
@@ -354,7 +387,7 @@ export default function Home() {
                 type="button"
                 onClick={handleAddTask}
                 disabled={loading || !inputTitle.trim()}
-                className="bg-text-primary text-canvas font-semibold px-5 py-2 rounded-xl text-xs hover:opacity-90 transition cursor-pointer disabled:opacity-40"
+                className="bg-text-primary text-canvas font-semibold px-5 py-2 rounded-xl text-xs hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-40"
               >
                 {loading ? "Guardando..." : "Crear Entrada"}
               </button>
@@ -390,17 +423,19 @@ export default function Home() {
                   return (
                     <li
                       key={task.id}
-                      className="group flex items-center justify-between bg-surface border border-border hover:border-text-muted/30 p-3.5 rounded-xl transition shadow-xs"
+                      className="group flex items-center justify-between bg-surface border border-border hover:border-text-muted/30 p-3.5 rounded-xl transition shadow-xs cursor-pointer"
                     >
                       <div
-                        onClick={() =>
-                          handleToggleTask(task.id, task.is_completed)
-                        }
-                        className="flex items-start sm:items-center gap-3 cursor-pointer flex-1 min-w-0"
+                        onClick={() => setSelectedEntry(task)}
+                        className="flex items-start sm:items-center gap-3 flex-1 min-w-0"
                       >
                         <button
                           type="button"
-                          className="mt-0.5 sm:mt-0 text-text-muted hover:text-ai transition shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleTask(task.id, task.is_completed);
+                          }}
+                          className="mt-0.5 sm:mt-0 text-text-muted hover:text-ai transition shrink-0 cursor-pointer"
                         >
                           {task.is_completed ? (
                             <CheckCircle2 className="w-4 h-4 text-university" />
@@ -439,7 +474,10 @@ export default function Home() {
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteTask(task.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTask(task.id);
+                        }}
                         title="Eliminar entrada"
                         className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-gym transition p-1.5 rounded-md hover:bg-gym/10 cursor-pointer ml-2"
                       >
@@ -453,6 +491,14 @@ export default function Home() {
           </section>
         </div>
       </main>
+
+      {/* Drawer lateral para inspección y edición de detalles */}
+      <EntryDetailDrawer
+        entry={selectedEntry}
+        isOpen={!!selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+        onUpdate={handleUpdateEntry}
+      />
     </div>
   );
 }
