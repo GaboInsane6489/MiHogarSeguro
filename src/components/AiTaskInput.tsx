@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 
@@ -9,7 +10,7 @@ interface AiTaskInputProps {
 }
 
 export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
-  const [LoadingAI, setLoadingAI] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   const handleGenerateAI = async () => {
     setLoadingAI(true);
@@ -25,36 +26,34 @@ export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
 
       if (data.text) {
         onChange(data.text.trim());
-        setLoadingAI(false);
-        return;
       }
     } catch (error) {
-      console.error("Error obteniendo tarea de la IA", error);
+      console.error("Error obteniendo sugerencia de la IA:", error);
     } finally {
       setLoadingAI(false);
     }
   };
 
   return (
-    <div>
+    <div className="block w-full relative">
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Ingresa tu nueva tarea aquí, master..."
-        className="w-full bg-neutral-950 border border-neutral-800 rounded-lg pl-3 pr-10 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-600 transition"
+        placeholder="Escribe una nota, tarea o idea..."
+        className="w-full block bg-surface-subtle border border-border-subtle rounded-xl px-4 py-3 pr-12 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai transition-colors"
       />
       <button
         type="button"
         onClick={handleGenerateAI}
-        disabled={LoadingAI}
-        title="Sugerir tarea con IA"
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md bg-neutral-400 border border-neutral-700 text-neutral-400 flex items-center justify-center transition hover:bg-purple-950/40 hover:text-purple-400 disabled:opacity-40 cursor-pointer"
+        disabled={loadingAI}
+        title="Sugerir idea con Gemini AI"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-ai hover:bg-ai/10 transition cursor-pointer flex items-center justify-center disabled:opacity-40"
       >
-        {LoadingAI ? (
-          <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+        {loadingAI ? (
+          <Loader2 className="w-4 h-4 text-ai animate-spin" />
         ) : (
-          <Sparkles className="w-4 h-4 text-purple-400" />
+          <Sparkles className="w-4 h-4 text-ai" />
         )}
       </button>
     </div>

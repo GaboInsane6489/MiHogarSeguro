@@ -1,17 +1,109 @@
 "use client";
+
 import { useState, useEffect, useMemo } from "react";
 import { supabaseClient } from "@/lib/supabase";
+import { Sidebar } from "@/components/Sidebar";
 import { AiTaskInput } from "@/components/AiTaskInput";
-import type { EntryItem, AreaType } from "@/types/database.types";
+import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
+import type { EntryItem, AreaType, HorizonType } from "@/types/database.types";
+import {
+  Briefcase,
+  GraduationCap,
+  Dumbbell,
+  Wallet,
+  User,
+  LayoutDashboard,
+  Calendar,
+  Clock,
+  Milestone,
+  CheckCircle2,
+  Circle,
+  Trash2,
+} from "lucide-react";
 
 type Filter = "all" | "pending" | "completed";
 
+const AREA_META: Record<
+  AreaType | "all",
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    colorClass: string;
+    borderClass: string;
+    bgClass: string;
+  }
+> = {
+  all: {
+    label: "Todas las Áreas",
+    icon: LayoutDashboard,
+    colorClass: "text-text-primary",
+    borderClass: "border-border-subtle",
+    bgClass: "bg-surface-subtle",
+  },
+  trabajo: {
+    label: "Trabajo",
+    icon: Briefcase,
+    colorClass: "text-work",
+    borderClass: "border-work/30",
+    bgClass: "bg-work/10",
+  },
+  universidad: {
+    label: "Universidad",
+    icon: GraduationCap,
+    colorClass: "text-university",
+    borderClass: "border-university/30",
+    bgClass: "bg-university/10",
+  },
+  gimnasio: {
+    label: "Gimnasio",
+    icon: Dumbbell,
+    colorClass: "text-gym",
+    borderClass: "border-gym/30",
+    bgClass: "bg-gym/10",
+  },
+  cashea: {
+    label: "Cashea / Finanzas",
+    icon: Wallet,
+    colorClass: "text-finance",
+    borderClass: "border-finance/30",
+    bgClass: "bg-finance/10",
+  },
+  personal: {
+    label: "Personal & AI",
+    icon: User,
+    colorClass: "text-ai",
+    borderClass: "border-ai/30",
+    bgClass: "bg-ai/10",
+  },
+};
+
+const HORIZON_LABELS: Record<
+  HorizonType,
+  { label: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  hoy: { label: "Hoy", icon: Calendar },
+  corto: { label: "Corto Plazo", icon: Clock },
+  mediano: { label: "Mediano Plazo", icon: Milestone },
+  largo: { label: "Largo Plazo", icon: Milestone },
+};
+
 export default function Home() {
-  const [inputTitle, setInputTitle] = useState("");
-  const [selectArea, setSelectArea] = useState<AreaType>("personal");
   const [tasks, setTasks] = useState<EntryItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [selectedEntry, setSelectedEntry] = useState<EntryItem | null>(null);
+
+  // Filtros de navegación
+  const [currentArea, setCurrentArea] = useState<AreaType | "all">("all");
+  const [currentHorizon, setCurrentHorizon] = useState<HorizonType | "all">(
+    "all",
+  );
+  const [statusFilter, setStatusFilter] = useState<Filter>("all");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Formulario de creación
+  const [inputTitle, setInputTitle] = useState("");
+  const [inputArea, setInputArea] = useState<AreaType>("personal");
+  const [inputHorizon, setInputHorizon] = useState<HorizonType>("hoy");
 
   // Cargar entradas desde Supabase
   useEffect(() => {
@@ -37,12 +129,16 @@ export default function Home() {
 
     setLoading(true);
 
+    const targetArea = currentArea === "all" ? inputArea : currentArea;
+    const targetHorizon =
+      currentHorizon === "all" ? inputHorizon : currentHorizon;
+
     const { data, error } = await supabaseClient
       .from("entries")
       .insert({
         title: inputTitle.trim(),
-        area: selectArea,
-        horizon: "hoy",
+        area: targetArea,
+        horizon: targetHorizon,
         content: [],
         is_completed: false,
       })
@@ -54,7 +150,6 @@ export default function Home() {
     } else if (data) {
       setTasks((prev) => [...prev, data]);
       setInputTitle("");
-      setSelectArea("personal");
     }
 
     setLoading(false);
@@ -98,10 +193,39 @@ export default function Home() {
     }
   };
 
+  // Actualizar entrada completa desde el Drawer
+  const handleUpdateEntry = async (
+    updatedData: Partial<EntryItem> & { id: string },
+  ) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === updatedData.id ? { ...t, ...updatedData } : t)),
+    );
+
+    if (selectedEntry && selectedEntry.id === updatedData.id) {
+      setSelectedEntry((prev) => (prev ? { ...prev, ...updatedData } : null));
+    }
+
+    const { data, error } = await supabaseClient
+      .from("entries")
+      .update(updatedData)
+      .eq("id", updatedData.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error al actualizar la entrada:", error.message);
+    } else if (data) {
+      setTasks((prev) => prev.map((t) => (t.id === updatedData.id ? data : t)));
+    }
+  };
+
   // Eliminar entrada en Supabase
   const handleDeleteTask = async (idToDelete: string) => {
     // Actualización optimista
     setTasks((prev) => prev.filter((task) => task.id !== idToDelete));
+    if (selectedEntry?.id === idToDelete) {
+      setSelectedEntry(null);
+    }
 
     const { error } = await supabaseClient
       .from("entries")
@@ -113,144 +237,270 @@ export default function Home() {
     }
   };
 
+  // Filtrado bidimensional (Status + Área + Horizonte)
   const filteredTasks = useMemo(() => {
-    switch (filter) {
-      case "all":
-        return tasks;
-      case "pending":
-        return tasks.filter((task) => !task.is_completed);
-      case "completed":
-        return tasks.filter((task) => task.is_completed);
-      default:
-        return tasks;
-    }
-  }, [tasks, filter]);
+    return tasks.filter((task) => {
+      // Filtro de estado
+      if (statusFilter === "pending" && task.is_completed) return false;
+      if (statusFilter === "completed" && !task.is_completed) return false;
+
+      // Filtro de área
+      if (currentArea !== "all" && task.area !== currentArea) return false;
+
+      // Filtro de horizonte
+      if (currentHorizon !== "all" && task.horizon !== currentHorizon)
+        return false;
+
+      return true;
+    });
+  }, [tasks, statusFilter, currentArea, currentHorizon]);
+
+  const activeAreaMeta = AREA_META[currentArea];
+  const ActiveAreaIcon = activeAreaMeta.icon;
 
   return (
-    <div className="bg-canvas text-text-primary min-h-screen flex justify-center items-start pt-6 p-4 font-sans">
-      <main className="bg-surface border border-border p-6 rounded-xl w-full max-w-lg space-y-6 shadow-2xl">
-        <header className="border-b border-border pb-4">
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">
-            Mi Espacio Seguro De Trabajo
-          </h1>
-          <p className="text-xs text-text-muted mt-1">
-            Second Brain & Gestor Diario
-          </p>
-        </header>
+    <div className="flex h-screen bg-canvas overflow-hidden text-text-primary font-sans">
+      {/* Sidebar lateral */}
+      <Sidebar
+        currentArea={currentArea}
+        onSelectArea={setCurrentArea}
+        currentHorizon={currentHorizon}
+        onSelectHorizon={setCurrentHorizon}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+      />
 
-        {/* Formulario de Entrada */}
-        <div className="flex flex-col sm:flex-row gap-2 w-full">
-          <AiTaskInput
-            value={inputTitle}
-            onChange={setInputTitle}
-            category={selectArea}
-          />
-          <select
-            value={selectArea}
-            onChange={(e) => setSelectArea(e.target.value as AreaType)}
-            className="bg-surface-subtle border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-ai cursor-pointer shrink-0 capitalize"
-          >
-            <option value="personal">Personal</option>
-            <option value="trabajo">Trabajo</option>
-            <option value="universidad">Universidad</option>
-            <option value="gimnasio">Gimnasio</option>
-            <option value="cashea">Cashea</option>
-          </select>
-          <button
-            onClick={handleAddTask}
-            disabled={loading}
-            className="bg-text-primary text-canvas font-medium px-4 py-2 rounded-lg text-sm hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-50 shrink-0"
-          >
-            {loading ? "Guardando..." : "Agregar"}
-          </button>
-        </div>
-
-        {/* Filtros */}
-        <div className="flex gap-1 bg-surface-subtle p-1 rounded-lg border border-border text-xs text-text-muted my-4">
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`flex-1 py-1.5 px-3 rounded-md transition cursor-pointer font-medium ${
-              filter === "all"
-                ? "bg-surface text-text-primary"
-                : "hover:text-text-primary"
-            }`}
-          >
-            Todas ({tasks.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("pending")}
-            className={`flex-1 py-1.5 px-3 rounded-md transition cursor-pointer font-medium ${
-              filter === "pending"
-                ? "bg-surface text-text-primary"
-                : "hover:text-text-primary"
-            }`}
-          >
-            Pendientes ({tasks.filter((t) => !t.is_completed).length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("completed")}
-            className={`flex-1 py-1.5 px-3 rounded-md transition cursor-pointer font-medium ${
-              filter === "completed"
-                ? "bg-surface text-text-primary"
-                : "hover:text-text-primary"
-            }`}
-          >
-            Completadas ({tasks.filter((t) => t.is_completed).length})
-          </button>
-        </div>
-
-        {/* Lista de Tareas */}
-        <ul className="space-y-2">
-          {filteredTasks.length === 0 ? (
-            <li className="text-xs text-text-muted text-center py-6 italic border border-dashed border-border rounded-lg">
-              No hay tareas registradas en esta sección.
-            </li>
-          ) : (
-            filteredTasks.map((task) => (
-              <li
-                key={task.id}
-                className="flex justify-between items-center bg-surface-subtle p-3 rounded-lg border border-border hover:border-text-muted/30 transition"
+      {/* Área principal de contenido */}
+      <main className="flex-1 flex flex-col h-full overflow-y-auto">
+        <div className="max-w-4xl w-full mx-auto p-6 md:p-8 space-y-6">
+          {/* Header dinámico por Área */}
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border-subtle">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center border ${activeAreaMeta.bgClass} ${activeAreaMeta.borderClass}`}
               >
-                <div
-                  onClick={() => handleToggleTask(task.id, task.is_completed)}
-                  className="flex items-center gap-3 cursor-pointer flex-1"
-                >
-                  <input
-                    type="checkbox"
-                    checked={task.is_completed}
-                    readOnly
-                    className="rounded border-border bg-surface accent-ai w-4 h-4 cursor-pointer"
-                  />
-                  <div className="flex flex-col gap-0.5">
-                    <span
-                      className={`text-sm font-medium transition ${
-                        task.is_completed
-                          ? "line-through text-text-muted opacity-60"
-                          : "text-text-primary"
-                      }`}
-                    >
-                      {task.title}
+                <ActiveAreaIcon
+                  className={`w-5 h-5 ${activeAreaMeta.colorClass}`}
+                />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl md:text-2xl font-bold tracking-tight text-text-primary">
+                    {activeAreaMeta.label}
+                  </h1>
+                  {currentHorizon !== "all" && (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-subtle border border-border-subtle text-text-muted">
+                      {HORIZON_LABELS[currentHorizon].label}
                     </span>
-                    <span className="text-[10px] text-text-muted uppercase tracking-wider">
-                      {task.area}
-                    </span>
-                  </div>
+                  )}
                 </div>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Second Brain & Espacio de Ejecución
+                </p>
+              </div>
+            </div>
 
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="text-xs text-gym hover:opacity-80 transition px-2 py-1 rounded bg-gym/10 border border-gym/20 cursor-pointer ml-2"
+            {/* Filtros de estado */}
+            <div className="flex gap-1 bg-surface p-1 rounded-lg border border-border-subtle text-xs text-text-muted">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("all")}
+                className={`py-1.5 px-3 rounded-md transition cursor-pointer font-medium ${
+                  statusFilter === "all"
+                    ? "bg-surface-subtle text-text-primary shadow-xs"
+                    : "hover:text-text-primary"
+                }`}
+              >
+                Todas ({tasks.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("pending")}
+                className={`py-1.5 px-3 rounded-md transition cursor-pointer font-medium ${
+                  statusFilter === "pending"
+                    ? "bg-surface-subtle text-text-primary shadow-xs"
+                    : "hover:text-text-primary"
+                }`}
+              >
+                Pendientes ({tasks.filter((t) => !t.is_completed).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("completed")}
+                className={`py-1.5 px-3 rounded-md transition cursor-pointer font-medium ${
+                  statusFilter === "completed"
+                    ? "bg-surface-subtle text-text-primary shadow-xs"
+                    : "hover:text-text-primary"
+                }`}
+              >
+                Completadas ({tasks.filter((t) => t.is_completed).length})
+              </button>
+            </div>
+          </header>
+
+          {/* Formulario de captura rápida Notion-like */}
+          <section className="w-full flex flex-col gap-4 bg-surface border border-border-subtle p-5 rounded-2xl shadow-xl my-6">
+            {/* Fila 1: Input de captura al 100% de ancho */}
+            <div className="w-full">
+              <AiTaskInput
+                value={inputTitle}
+                onChange={setInputTitle}
+                category={currentArea === "all" ? inputArea : currentArea}
+              />
+            </div>
+
+            {/* Fila 2: Selectores y Botón de acción */}
+            <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border-subtle/50">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Selector de Área si está en 'all' */}
+                {currentArea === "all" && (
+                  <select
+                    value={inputArea}
+                    onChange={(e) => setInputArea(e.target.value as AreaType)}
+                    className="bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer capitalize transition-colors"
+                  >
+                    <option value="personal">Personal & AI</option>
+                    <option value="trabajo">Trabajo</option>
+                    <option value="universidad">Universidad</option>
+                    <option value="gimnasio">Gimnasio</option>
+                    <option value="cashea">Cashea</option>
+                  </select>
+                )}
+
+                {/* Selector de Horizonte */}
+                <select
+                  value={
+                    currentHorizon === "all" ? inputHorizon : currentHorizon
+                  }
+                  onChange={(e) =>
+                    setInputHorizon(e.target.value as HorizonType)
+                  }
+                  disabled={currentHorizon !== "all"}
+                  className="bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer disabled:opacity-50 transition-colors"
                 >
-                  Eliminar
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
+                  <option value="hoy">Horizonte: Hoy</option>
+                  <option value="corto">Horizonte: Corto Plazo</option>
+                  <option value="mediano">Horizonte: Mediano Plazo</option>
+                  <option value="largo">Horizonte: Largo Plazo</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddTask}
+                disabled={loading || !inputTitle.trim()}
+                className="bg-text-primary text-canvas font-semibold px-5 py-2 rounded-xl text-xs hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-40"
+              >
+                {loading ? "Guardando..." : "Crear Entrada"}
+              </button>
+            </div>
+          </section>
+
+          {/* Lista de Entradas */}
+          <section className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Entradas ({filteredTasks.length})
+              </h2>
+            </div>
+
+            {filteredTasks.length === 0 ? (
+              <div className="text-center py-12 px-4 rounded-xl border border-dashed border-border-subtle bg-surface/40 space-y-1">
+                <p className="text-sm text-text-primary font-medium">
+                  No hay entradas en esta vista
+                </p>
+                <p className="text-xs text-text-muted">
+                  Crea una nueva entrada usando el formulario superior o
+                  selecciona otra área/horizonte en la barra lateral.
+                </p>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {filteredTasks.map((task) => {
+                  const areaInfo = AREA_META[task.area] || AREA_META.personal;
+                  const horizonInfo =
+                    HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
+                  const HorizonIcon = horizonInfo.icon;
+
+                  return (
+                    <li
+                      key={task.id}
+                      className="group flex items-center justify-between bg-surface border border-border-subtle hover:border-text-muted/40 p-3.5 rounded-xl transition shadow-xs cursor-pointer"
+                    >
+                      <div
+                        onClick={() => setSelectedEntry(task)}
+                        className="flex items-start sm:items-center gap-3 flex-1 min-w-0"
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleTask(task.id, task.is_completed);
+                          }}
+                          className="mt-0.5 sm:mt-0 text-text-muted hover:text-ai transition shrink-0 cursor-pointer"
+                        >
+                          {task.is_completed ? (
+                            <CheckCircle2 className="w-4 h-4 text-university" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-text-muted" />
+                          )}
+                        </button>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 flex-1 min-w-0">
+                          <span
+                            className={`text-sm transition truncate ${
+                              task.is_completed
+                                ? "line-through text-text-muted opacity-60"
+                                : "text-text-primary font-medium"
+                            }`}
+                          >
+                            {task.title}
+                          </span>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {/* Tag de Área */}
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${areaInfo.bgClass} ${areaInfo.borderClass} ${areaInfo.colorClass}`}
+                            >
+                              {areaInfo.label}
+                            </span>
+
+                            {/* Tag de Horizonte */}
+                            <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-subtle border border-border-subtle px-2 py-0.5 rounded-md">
+                              <HorizonIcon className="w-3 h-3" />
+                              <span>{horizonInfo.label}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTask(task.id);
+                        }}
+                        title="Eliminar entrada"
+                        className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-gym transition p-1.5 rounded-md hover:bg-gym/10 cursor-pointer ml-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </div>
       </main>
+
+      {/* Drawer lateral para inspección y edición de detalles */}
+      <EntryDetailDrawer
+        entry={selectedEntry}
+        isOpen={!!selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+        onUpdate={handleUpdateEntry}
+      />
     </div>
   );
 }
