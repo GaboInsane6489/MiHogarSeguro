@@ -215,9 +215,7 @@ export default function Home() {
     if (error) {
       console.error("Error al actualizar la entrada:", error.message);
     } else if (data) {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === updatedData.id ? data : t)),
-      );
+      setTasks((prev) => prev.map((t) => (t.id === updatedData.id ? data : t)));
     }
   };
 
@@ -341,14 +339,18 @@ export default function Home() {
           </header>
 
           {/* Formulario de captura rápida Notion-like */}
-          <section className="bg-surface border border-border-subtle p-5 rounded-2xl shadow-lg my-6 space-y-4">
-            <AiTaskInput
-              value={inputTitle}
-              onChange={setInputTitle}
-              category={currentArea === "all" ? inputArea : currentArea}
-            />
+          <section className="w-full flex flex-col gap-4 bg-surface border border-border-subtle p-5 rounded-2xl shadow-xl my-6">
+            {/* Fila 1: Input de captura al 100% de ancho */}
+            <div className="w-full">
+              <AiTaskInput
+                value={inputTitle}
+                onChange={setInputTitle}
+                category={currentArea === "all" ? inputArea : currentArea}
+              />
+            </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border-subtle/50">
+            {/* Fila 2: Selectores y Botón de acción */}
+            <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border-subtle/50">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Área si está en 'all' */}
                 {currentArea === "all" && (

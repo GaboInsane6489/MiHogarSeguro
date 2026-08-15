@@ -35,13 +35,13 @@ export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
   };
 
   return (
-    <div className="relative w-full">
+    <div className="block w-full relative">
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Escribe una nota, tarea o idea..."
-        className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-4 py-3 pr-11 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai transition-colors"
+        className="w-full block bg-surface-subtle border border-border-subtle rounded-xl px-4 py-3 pr-12 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai transition-colors"
       />
       <button
         type="button"
