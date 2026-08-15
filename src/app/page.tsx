@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Sparkles,
   Edit3,
+  Plus,
 } from "lucide-react";
 
 type Filter = "all" | "pending" | "completed";
@@ -42,44 +43,44 @@ const AREA_META: Record<
   all: {
     label: "Todas las Areas",
     icon: LayoutDashboard,
-    colorClass: "text-text-primary",
-    borderClass: "border-border-subtle",
-    bgClass: "bg-surface-subtle",
+    colorClass: "text-zinc-100",
+    borderClass: "border-white/10",
+    bgClass: "bg-zinc-800",
   },
   trabajo: {
     label: "Trabajo",
     icon: Briefcase,
-    colorClass: "text-work",
-    borderClass: "border-work/30",
-    bgClass: "bg-work/10",
+    colorClass: "text-sky-400",
+    borderClass: "border-sky-500/30",
+    bgClass: "bg-sky-500/10",
   },
   universidad: {
     label: "Universidad",
     icon: GraduationCap,
-    colorClass: "text-university",
-    borderClass: "border-university/30",
-    bgClass: "bg-university/10",
+    colorClass: "text-emerald-400",
+    borderClass: "border-emerald-500/30",
+    bgClass: "bg-emerald-500/10",
   },
   gimnasio: {
     label: "Gimnasio",
     icon: Dumbbell,
-    colorClass: "text-gym",
-    borderClass: "border-gym/30",
-    bgClass: "bg-gym/10",
+    colorClass: "text-rose-400",
+    borderClass: "border-rose-500/30",
+    bgClass: "bg-rose-500/10",
   },
   cashea: {
     label: "Cashea / Finanzas",
     icon: Wallet,
-    colorClass: "text-finance",
-    borderClass: "border-finance/30",
-    bgClass: "bg-finance/10",
+    colorClass: "text-amber-400",
+    borderClass: "border-amber-500/30",
+    bgClass: "bg-amber-500/10",
   },
   personal: {
     label: "Personal & AI",
     icon: UserIcon,
-    colorClass: "text-ai",
-    borderClass: "border-ai/30",
-    bgClass: "bg-ai/10",
+    colorClass: "text-indigo-400",
+    borderClass: "border-indigo-500/30",
+    bgClass: "bg-indigo-500/10",
   },
 };
 
@@ -231,7 +232,6 @@ export default function Home() {
 
     if (error) {
       console.error("Error al actualizar el estado:", error.message);
-      // Revertir estado si falla
       setTasks((prev) =>
         prev.map((task) =>
           task.id === idToToggle
@@ -302,7 +302,7 @@ export default function Home() {
     });
   }, [tasks, statusFilter, currentArea, currentHorizon]);
 
-  // Metricas de ejecucion del dia (Horizonte 'hoy')
+  // Metricas de ejecucion del dia
   const todayTasks = useMemo(() => tasks.filter((t) => t.horizon === "hoy"), [tasks]);
   const todayCompleted = useMemo(() => todayTasks.filter((t) => t.is_completed).length, [todayTasks]);
   const todayProgressPercent = todayTasks.length > 0 ? Math.round((todayCompleted / todayTasks.length) * 100) : 0;
@@ -311,7 +311,7 @@ export default function Home() {
   const ActiveAreaIcon = activeAreaMeta.icon;
 
   return (
-    <div className="flex h-screen bg-canvas overflow-hidden text-text-primary font-sans">
+    <div className="flex h-screen bg-[#090d16] overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar lateral */}
       <Sidebar
         currentArea={currentArea}
@@ -325,11 +325,11 @@ export default function Home() {
         onLogout={handleLogout}
       />
 
-      {/* Area Principal de Contenido */}
-      <main className="flex-1 flex flex-col h-full overflow-y-auto">
-        <div className="max-w-4xl w-full mx-auto p-6 md:p-8 space-y-6">
-          {/* Header Superior con Metricas de Rendimiento Linear-style */}
-          <header className="space-y-4 pb-5 border-b border-border-subtle">
+      {/* Viewport Principal Desacoplado con Contencion Centrada */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto w-full px-6 sm:px-10 py-8 min-h-screen flex flex-col justify-start">
+          {/* Header Superior y Metricas */}
+          <header className="space-y-4 mb-6 pb-5 border-b border-white/10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
@@ -339,30 +339,30 @@ export default function Home() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-text-primary">
+                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
                       {activeAreaMeta.label}
                     </h1>
                     {currentHorizon !== "all" && (
-                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-surface-subtle border border-border-subtle text-text-muted">
+                      <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md bg-zinc-800 border border-white/10 text-zinc-400">
                         {HORIZON_LABELS[currentHorizon].label}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-text-muted mt-0.5">
+                  <p className="text-xs text-zinc-400 mt-0.5">
                     Second Brain & Espacio de Ejecucion Diaria
                   </p>
                 </div>
               </div>
 
               {/* Filtros de estado */}
-              <div className="flex gap-1 bg-surface p-1 rounded-xl border border-border-subtle text-xs text-text-muted">
+              <div className="flex gap-1 bg-[#161b22] p-1 rounded-xl border border-white/10 text-xs text-zinc-400">
                 <button
                   type="button"
                   onClick={() => setStatusFilter("all")}
                   className={`py-1.5 px-3 rounded-lg transition cursor-pointer font-medium ${
                     statusFilter === "all"
-                      ? "bg-surface-subtle text-text-primary shadow-xs font-semibold"
-                      : "hover:text-text-primary"
+                      ? "bg-zinc-800 text-white shadow-xs font-semibold"
+                      : "hover:text-white"
                   }`}
                 >
                   Todas ({tasks.length})
@@ -372,8 +372,8 @@ export default function Home() {
                   onClick={() => setStatusFilter("pending")}
                   className={`py-1.5 px-3 rounded-lg transition cursor-pointer font-medium ${
                     statusFilter === "pending"
-                      ? "bg-surface-subtle text-text-primary shadow-xs font-semibold"
-                      : "hover:text-text-primary"
+                      ? "bg-zinc-800 text-white shadow-xs font-semibold"
+                      : "hover:text-white"
                   }`}
                 >
                   Pendientes ({tasks.filter((t) => !t.is_completed).length})
@@ -383,8 +383,8 @@ export default function Home() {
                   onClick={() => setStatusFilter("completed")}
                   className={`py-1.5 px-3 rounded-lg transition cursor-pointer font-medium ${
                     statusFilter === "completed"
-                      ? "bg-surface-subtle text-text-primary shadow-xs font-semibold"
-                      : "hover:text-text-primary"
+                      ? "bg-zinc-800 text-white shadow-xs font-semibold"
+                      : "hover:text-white"
                   }`}
                 >
                   Completadas ({tasks.filter((t) => t.is_completed).length})
@@ -393,48 +393,46 @@ export default function Home() {
             </div>
 
             {/* Barra de Progreso del Dia */}
-            <div className="bg-surface/60 border border-border-subtle p-3.5 rounded-xl space-y-2">
+            <div className="p-4 rounded-xl border border-white/10 bg-[#161b22]/60 space-y-2.5 shadow-sm">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-ai" />
-                  <span className="font-semibold text-text-primary">
+                  <TrendingUp className="w-4 h-4 text-indigo-400" />
+                  <span className="font-semibold text-white">
                     Progreso de Hoy
                   </span>
-                  <span className="text-[11px] text-text-muted">
+                  <span className="text-[11px] text-zinc-400">
                     ({todayCompleted}/{todayTasks.length} completadas)
                   </span>
                 </div>
-                <span className="font-mono text-xs font-bold text-ai">
+                <span className="font-mono text-xs font-bold text-indigo-400">
                   {todayProgressPercent}%
                 </span>
               </div>
-              <div className="w-full h-1.5 bg-surface-subtle rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-ai via-work to-university transition-all duration-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 transition-all duration-500 rounded-full"
                   style={{ width: `${todayProgressPercent}%` }}
                 />
               </div>
             </div>
           </header>
 
-          {/* Formulario de Captura Rapida Linear-Style */}
-          <section className="w-full flex flex-col gap-4 bg-surface border border-border-subtle p-5 rounded-2xl shadow-xl">
-            <div className="w-full">
-              <AiTaskInput
-                value={inputTitle}
-                onChange={setInputTitle}
-                category={currentArea === "all" ? inputArea : currentArea}
-              />
-            </div>
+          {/* Formulario de Captura Rapida (mb-8) */}
+          <section className="w-full bg-[#161b22] border border-white/10 rounded-xl p-3 shadow-lg focus-within:border-indigo-500/60 transition-all mb-8">
+            <AiTaskInput
+              value={inputTitle}
+              onChange={setInputTitle}
+              category={currentArea === "all" ? inputArea : currentArea}
+            />
 
-            <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border-subtle/50">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
+              <div className="flex items-center gap-2">
                 {/* Selector de Area si esta en 'all' */}
                 {currentArea === "all" && (
                   <select
                     value={inputArea}
                     onChange={(e) => setInputArea(e.target.value as AreaType)}
-                    className="bg-surface-subtle border border-border-subtle rounded-xl px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer capitalize transition-colors"
+                    className="h-8 px-2.5 text-xs bg-zinc-800 text-zinc-300 border border-white/10 rounded-md focus:outline-none cursor-pointer capitalize"
                   >
                     <option value="personal">Personal & AI</option>
                     <option value="trabajo">Trabajo</option>
@@ -449,7 +447,7 @@ export default function Home() {
                   value={currentHorizon === "all" ? inputHorizon : currentHorizon}
                   onChange={(e) => setInputHorizon(e.target.value as HorizonType)}
                   disabled={currentHorizon !== "all"}
-                  className="bg-surface-subtle border border-border-subtle rounded-xl px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer disabled:opacity-50 transition-colors"
+                  className="h-8 px-2.5 text-xs bg-zinc-800 text-zinc-300 border border-white/10 rounded-md focus:outline-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="hoy">Horizonte: Hoy</option>
                   <option value="corto">Horizonte: Corto Plazo</option>
@@ -462,17 +460,18 @@ export default function Home() {
                 type="button"
                 onClick={handleAddTask}
                 disabled={creating || !inputTitle.trim()}
-                className="bg-text-primary text-canvas font-semibold px-5 py-2 rounded-xl text-xs hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-40"
+                className="h-8 px-4 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 rounded-md shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
               >
-                {creating ? "Guardando..." : "Crear Entrada"}
+                <Plus className="w-3.5 h-3.5" />
+                <span>{creating ? "Guardando..." : "Crear Entrada"}</span>
               </button>
             </div>
           </section>
 
-          {/* Lista de Entradas con Animaciones y Hover Actions */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-xs font-bold text-text-muted uppercase tracking-wider font-mono">
+          {/* Lista de Tareas (space-y-2.5) */}
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between px-1 mb-2">
+              <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
                 Entradas ({filteredTasks.length})
               </h2>
             </div>
@@ -483,39 +482,39 @@ export default function Home() {
                 {[1, 2, 3].map((n) => (
                   <div
                     key={n}
-                    className="h-14 rounded-xl bg-surface border border-border-subtle animate-pulse"
+                    className="h-14 rounded-xl bg-[#161b22] border border-white/5 animate-pulse"
                   />
                 ))}
               </div>
             ) : filteredTasks.length === 0 ? (
               // Empty State
-              <div className="text-center py-12 px-4 rounded-xl border border-dashed border-border-subtle bg-surface/30 space-y-2">
-                <div className="w-10 h-10 rounded-full bg-surface-subtle border border-border-subtle flex items-center justify-center mx-auto text-text-muted">
+              <div className="text-center py-12 px-4 rounded-xl border border-dashed border-white/10 bg-[#161b22]/30 space-y-2">
+                <div className="w-10 h-10 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center mx-auto text-zinc-400">
                   <CheckCircle className="w-5 h-5" />
                 </div>
-                <p className="text-sm text-text-primary font-medium">
+                <p className="text-sm text-zinc-200 font-medium">
                   No hay entradas en esta vista
                 </p>
-                <p className="text-xs text-text-muted">
+                <p className="text-xs text-zinc-500">
                   Crea una nueva entrada usando el formulario superior o selecciona otra area en la barra lateral.
                 </p>
               </div>
             ) : (
               // Task Rows
-              <ul className="space-y-2">
+              <div className="space-y-2">
                 {filteredTasks.map((task) => {
                   const areaInfo = AREA_META[task.area] || AREA_META.personal;
                   const horizonInfo = HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
                   const HorizonIcon = horizonInfo.icon;
 
                   return (
-                    <li
+                    <div
                       key={task.id}
-                      className="group flex items-center justify-between bg-surface border border-border-subtle hover:border-white/15 hover:bg-surface-subtle/30 p-3.5 rounded-xl transition-all duration-150 shadow-xs"
+                      className="flex items-center justify-between p-3.5 rounded-xl bg-[#161b22]/70 hover:bg-[#161b22] border border-white/5 hover:border-white/15 transition-all group"
                     >
                       <div
                         onClick={() => setSelectedEntry(task)}
-                        className="flex items-start sm:items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                        className="flex items-center gap-3.5 min-w-0 flex-1 cursor-pointer"
                       >
                         <button
                           type="button"
@@ -523,83 +522,82 @@ export default function Home() {
                             e.stopPropagation();
                             handleToggleTask(task.id, task.is_completed);
                           }}
-                          className="mt-0.5 sm:mt-0 text-text-muted hover:text-ai transition shrink-0 cursor-pointer"
+                          className="text-zinc-500 hover:text-indigo-400 transition shrink-0 cursor-pointer"
                         >
                           {task.is_completed ? (
-                            <CheckCircle2 className="w-4 h-4 text-university" />
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                           ) : (
-                            <Circle className="w-4 h-4 text-text-muted hover:text-text-primary" />
+                            <Circle className="w-4 h-4 text-zinc-500 hover:text-zinc-300" />
                           )}
                         </button>
 
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 flex-1 min-w-0">
-                          <span
-                            className={`text-xs sm:text-sm transition truncate ${
-                              task.is_completed
-                                ? "line-through text-text-muted opacity-50"
-                                : "text-text-primary font-medium"
-                            }`}
-                          >
-                            {task.title}
+                        <span
+                          className={`text-sm font-medium transition truncate ${
+                            task.is_completed
+                              ? "line-through text-zinc-500 opacity-60"
+                              : "text-zinc-100"
+                          }`}
+                        >
+                          {task.title}
+                        </span>
+                      </div>
+
+                      {/* Badges y Acciones Rapidas */}
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        {/* Tag de Area */}
+                        <span
+                          className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${areaInfo.bgClass} ${areaInfo.borderClass} ${areaInfo.colorClass}`}
+                        >
+                          {areaInfo.label}
+                        </span>
+
+                        {/* Tag de Horizonte */}
+                        <span className="flex items-center gap-1 text-[10px] text-zinc-400 bg-zinc-800/80 border border-white/10 px-2 py-0.5 rounded-md font-mono">
+                          <HorizonIcon className="w-3 h-3" />
+                          <span>{horizonInfo.label}</span>
+                        </span>
+
+                        {/* Indicador de Bloques AI */}
+                        {task.content && task.content.length > 0 && (
+                          <span className="flex items-center gap-1 text-[10px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded-md">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            <span>{task.content.length}</span>
                           </span>
+                        )}
 
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {/* Tag de Area */}
-                            <span
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${areaInfo.bgClass} ${areaInfo.borderClass} ${areaInfo.colorClass}`}
-                            >
-                              {areaInfo.label}
-                            </span>
-
-                            {/* Tag de Horizonte */}
-                            <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-subtle border border-border-subtle px-2 py-0.5 rounded-md font-mono">
-                              <HorizonIcon className="w-3 h-3" />
-                              <span>{horizonInfo.label}</span>
-                            </span>
-
-                            {/* Indicador de Bloques AI */}
-                            {task.content && task.content.length > 0 && (
-                              <span className="flex items-center gap-1 text-[10px] text-ai bg-ai/10 border border-ai/20 px-1.5 py-0.5 rounded-md">
-                                <Sparkles className="w-2.5 h-2.5" />
-                                <span>{task.content.length}</span>
-                              </span>
-                            )}
-                          </div>
+                        {/* Botones al pasar el cursor */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEntry(task)}
+                            title="Editar detalles"
+                            className="text-zinc-400 hover:text-white p-1 rounded-md hover:bg-zinc-800 transition cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task.id);
+                            }}
+                            title="Eliminar entrada"
+                            className="text-zinc-400 hover:text-rose-400 p-1 rounded-md hover:bg-rose-500/10 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
-
-                      {/* Quick Actions on Hover */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedEntry(task)}
-                          title="Editar detalles"
-                          className="text-text-muted hover:text-text-primary p-1.5 rounded-lg hover:bg-surface-subtle transition cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTask(task.id);
-                          }}
-                          title="Eliminar entrada"
-                          className="text-text-muted hover:text-gym p-1.5 rounded-lg hover:bg-gym/10 transition cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
+              </div>
             )}
           </section>
         </div>
       </main>
 
-      {/* Modal de Autenticacion Supabase */}
+      {/* Modal de Autenticacion */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

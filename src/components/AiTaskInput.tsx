@@ -38,39 +38,29 @@ export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
   };
 
   return (
-    <div className="relative w-full group">
-      <div className="relative flex items-center w-full rounded-xl bg-surface-subtle border border-border-subtle group-focus-within:border-ai/70 group-focus-within:ring-2 group-focus-within:ring-ai/20 transition-all duration-200 shadow-inner">
-        <div className="pl-3.5 pr-1 text-text-muted/60">
-          <Wand2 className="w-4 h-4 text-ai/60 group-focus-within:text-ai transition-colors" />
-        </div>
-        
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Escribe una nota, tarea o idea para capturar..."
-          className="w-full bg-transparent px-2.5 py-3 pr-24 text-xs sm:text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none"
-        />
-
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handleGenerateAI}
-            disabled={loadingAI}
-            title="Generar sugerencia con Gemini AI"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-ai/15 hover:bg-ai/25 text-ai border border-ai/30 text-[11px] font-semibold transition cursor-pointer disabled:opacity-40"
-          >
-            {loadingAI ? (
-              <Loader2 className="w-3 h-3 text-ai animate-spin" />
-            ) : (
-              <Sparkles className="w-3 h-3 text-ai" />
-            )}
-            <span className="hidden sm:inline">
-              {loadingAI ? "Pensando..." : "Gemini AI"}
-            </span>
-          </button>
-        </div>
-      </div>
+    <div className="relative flex items-center w-full">
+      <Wand2 className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4 text-zinc-400" />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Escribe una nota, tarea o idea para capturar..."
+        className="w-full h-11 bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-28 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+      />
+      <button
+        type="button"
+        onClick={handleGenerateAI}
+        disabled={loadingAI}
+        title="Generar sugerencia con Gemini AI"
+        className="h-8 absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 text-xs bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-lg flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40"
+      >
+        {loadingAI ? (
+          <Loader2 className="w-3.5 h-3.5 text-indigo-300 animate-spin" />
+        ) : (
+          <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+        )}
+        <span>{loadingAI ? "Pensando..." : "Gemini AI"}</span>
+      </button>
     </div>
   );
 }
