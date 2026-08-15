@@ -10,6 +10,8 @@ interface GeneratePayload {
   horizon?: HorizonType;
 }
 
+const MODEL_NAME = "gemini-3.6-flash";
+
 export async function POST(request: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
         : `Genera una única tarea diaria corta, concisa y orientada a la acción para la categoría ${area} (horizonte: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: MODEL_NAME,
         contents: userPrompt,
       });
 
@@ -56,7 +58,7 @@ export async function POST(request: Request) {
       const userPrompt = `Desglosa la siguiente entrada: "${input}". Área: ${area}. Horizonte temporal: ${horizon}.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: MODEL_NAME,
         contents: userPrompt,
         config: {
           systemInstruction,
@@ -113,11 +115,13 @@ export async function POST(request: Request) {
       { error: "Modo no reconocido. Use 'suggest' o 'breakdown'." },
       { status: 400 },
     );
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Error desconocido al procesar con Gemini AI.";
     console.error("Error en /api/generate:", error);
     return NextResponse.json(
       {
-        error: "Ocurrió un error al procesar la solicitud con Gemini AI.",
+        error: errorMessage,
       },
       { status: 500 },
     );
