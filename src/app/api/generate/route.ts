@@ -10,7 +10,42 @@ interface GeneratePayload {
   horizon?: HorizonType;
 }
 
-const MODEL_NAME = "gemini-3.6-flash";
+const FALLBACK_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-2.5-flash",
+  "gemini-1.5-flash",
+];
+
+// Helper para ejecutar generación con cascada de fallback ante picos de demanda o saturación
+async function generateWithFallback(
+  ai: GoogleGenAI,
+  params: {
+    contents: string;
+    config?: {
+      systemInstruction?: string;
+      responseMimeType?: string;
+      responseSchema?: Record<string, unknown>;
+    };
+  },
+) {
+  let lastError: unknown;
+
+  for (const model of FALLBACK_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: params.contents,
+        config: params.config,
+      });
+      return response;
+    } catch (error) {
+      lastError = error;
+      console.warn(`Aviso: Modelo ${model} no disponible o saturado, intentando con siguiente modelo de respaldo...`);
+    }
+  }
+
+  throw lastError;
+}
 
 export async function POST(request: Request) {
   try {
@@ -36,8 +71,7 @@ export async function POST(request: Request) {
         ? `Genera un título corto, accionable e inspirador relacionado con "${input}" para el área de ${area} (horizonte temporal: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`
         : `Genera una única tarea diaria corta, concisa y orientada a la acción para la categoría ${area} (horizonte: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`;
 
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
+      const response = await generateWithFallback(ai, {
         contents: userPrompt,
       });
 
@@ -57,8 +91,7 @@ export async function POST(request: Request) {
 
       const userPrompt = `Desglosa la siguiente entrada: "${input}". Área: ${area}. Horizonte temporal: ${horizon}.`;
 
-      const response = await ai.models.generateContent({
-        model: MODEL_NAME,
+      const response = await generateWithFallback(ai, {
         contents: userPrompt,
         config: {
           systemInstruction,
