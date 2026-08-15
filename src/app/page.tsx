@@ -76,7 +76,10 @@ const AREA_META: Record<
   },
 };
 
-const HORIZON_LABELS: Record<HorizonType, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+const HORIZON_LABELS: Record<
+  HorizonType,
+  { label: string; icon: React.ComponentType<{ className?: string }> }
+> = {
   hoy: { label: "Hoy", icon: Calendar },
   corto: { label: "Corto Plazo", icon: Clock },
   mediano: { label: "Mediano Plazo", icon: Milestone },
@@ -89,7 +92,9 @@ export default function Home() {
 
   // Filtros de navegación
   const [currentArea, setCurrentArea] = useState<AreaType | "all">("all");
-  const [currentHorizon, setCurrentHorizon] = useState<HorizonType | "all">("all");
+  const [currentHorizon, setCurrentHorizon] = useState<HorizonType | "all">(
+    "all",
+  );
   const [statusFilter, setStatusFilter] = useState<Filter>("all");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -97,7 +102,6 @@ export default function Home() {
   const [inputTitle, setInputTitle] = useState("");
   const [inputArea, setInputArea] = useState<AreaType>("personal");
   const [inputHorizon, setInputHorizon] = useState<HorizonType>("hoy");
-
 
   // Cargar entradas desde Supabase
   useEffect(() => {
@@ -124,7 +128,8 @@ export default function Home() {
     setLoading(true);
 
     const targetArea = currentArea === "all" ? inputArea : currentArea;
-    const targetHorizon = currentHorizon === "all" ? inputHorizon : currentHorizon;
+    const targetHorizon =
+      currentHorizon === "all" ? inputHorizon : currentHorizon;
 
     const { data, error } = await supabaseClient
       .from("entries")
@@ -212,7 +217,8 @@ export default function Home() {
       if (currentArea !== "all" && task.area !== currentArea) return false;
 
       // Filtro de horizonte
-      if (currentHorizon !== "all" && task.horizon !== currentHorizon) return false;
+      if (currentHorizon !== "all" && task.horizon !== currentHorizon)
+        return false;
 
       return true;
     });
@@ -242,7 +248,9 @@ export default function Home() {
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center border ${activeAreaMeta.bgClass} ${activeAreaMeta.borderClass}`}
               >
-                <ActiveAreaIcon className={`w-5 h-5 ${activeAreaMeta.colorClass}`} />
+                <ActiveAreaIcon
+                  className={`w-5 h-5 ${activeAreaMeta.colorClass}`}
+                />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -300,14 +308,14 @@ export default function Home() {
           </header>
 
           {/* Formulario de captura rápida Notion-like */}
-          <section className="bg-surface border border-border p-3.5 sm:p-4 rounded-2xl shadow-xs space-y-3">
+          <section className="bg-surface border border-border p-5 rounded-2xl shadow-lg space-y-4 my-6">
             <AiTaskInput
               value={inputTitle}
               onChange={setInputTitle}
               category={currentArea === "all" ? inputArea : currentArea}
             />
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/40">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Área si está en 'all' */}
                 {currentArea === "all" && (
@@ -326,8 +334,12 @@ export default function Home() {
 
                 {/* Selector de Horizonte */}
                 <select
-                  value={currentHorizon === "all" ? inputHorizon : currentHorizon}
-                  onChange={(e) => setInputHorizon(e.target.value as HorizonType)}
+                  value={
+                    currentHorizon === "all" ? inputHorizon : currentHorizon
+                  }
+                  onChange={(e) =>
+                    setInputHorizon(e.target.value as HorizonType)
+                  }
                   disabled={currentHorizon !== "all"}
                   className="bg-surface-subtle border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-muted hover:text-text-primary focus:text-text-primary focus:outline-none focus:border-ai/50 cursor-pointer disabled:opacity-50 transition"
                 >
@@ -342,7 +354,7 @@ export default function Home() {
                 type="button"
                 onClick={handleAddTask}
                 disabled={loading || !inputTitle.trim()}
-                className="self-end sm:self-auto bg-text-primary text-canvas font-semibold px-4 py-1.5 rounded-lg text-xs hover:opacity-90 active:scale-95 transition cursor-pointer disabled:opacity-40"
+                className="bg-text-primary text-canvas font-semibold px-5 py-2 rounded-xl text-xs hover:opacity-90 transition cursor-pointer disabled:opacity-40"
               >
                 {loading ? "Guardando..." : "Crear Entrada"}
               </button>
@@ -363,14 +375,16 @@ export default function Home() {
                   No hay entradas en esta vista
                 </p>
                 <p className="text-xs text-text-muted">
-                  Crea una nueva entrada usando el formulario superior o selecciona otra área/horizonte en la barra lateral.
+                  Crea una nueva entrada usando el formulario superior o
+                  selecciona otra área/horizonte en la barra lateral.
                 </p>
               </div>
             ) : (
               <ul className="space-y-2">
                 {filteredTasks.map((task) => {
                   const areaInfo = AREA_META[task.area] || AREA_META.personal;
-                  const horizonInfo = HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
+                  const horizonInfo =
+                    HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
                   const HorizonIcon = horizonInfo.icon;
 
                   return (
@@ -379,7 +393,9 @@ export default function Home() {
                       className="group flex items-center justify-between bg-surface border border-border hover:border-text-muted/30 p-3.5 rounded-xl transition shadow-xs"
                     >
                       <div
-                        onClick={() => handleToggleTask(task.id, task.is_completed)}
+                        onClick={() =>
+                          handleToggleTask(task.id, task.is_completed)
+                        }
                         className="flex items-start sm:items-center gap-3 cursor-pointer flex-1 min-w-0"
                       >
                         <button

@@ -41,14 +41,14 @@ export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Escribe una nota, tarea o idea..."
-        className="w-full bg-surface-subtle border border-border rounded-xl pl-3.5 pr-11 py-2.5 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai/50 focus:ring-1 focus:ring-ai/30 transition"
+        className="w-full bg-surface-subtle border border-border rounded-xl px-4 py-3 pr-12 text-sm text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-ai/60 transition"
       />
       <button
         type="button"
         onClick={handleGenerateAI}
         disabled={loadingAI}
         title="Sugerir idea con Gemini AI"
-        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-ai bg-ai/10 border border-ai/20 hover:bg-ai/20 hover:border-ai/40 transition disabled:opacity-40 cursor-pointer flex items-center justify-center"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-ai hover:bg-ai/10 transition disabled:opacity-40 cursor-pointer flex items-center justify-center"
       >
         {loadingAI ? (
           <Loader2 className="w-4 h-4 text-ai animate-spin" />
