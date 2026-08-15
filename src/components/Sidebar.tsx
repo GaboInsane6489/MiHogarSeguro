@@ -103,12 +103,12 @@ export function Sidebar({
 }: SidebarProps) {
   return (
     <aside
-      className={`relative flex flex-col h-screen bg-surface border-r border-border transition-all duration-300 select-none ${
+      className={`relative flex flex-col h-screen bg-surface border-r border-border-subtle transition-all duration-300 select-none ${
         isCollapsed ? "w-16" : "w-64"
       }`}
     >
       {/* Header / Workspace info */}
-      <div className="flex items-center justify-between p-4 border-b border-border min-h-[65px]">
+      <div className="flex items-center justify-between p-4 border-b border-border-subtle min-h-[65px]">
         {!isCollapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-ai/15 border border-ai/30 flex items-center justify-center shrink-0">
@@ -130,7 +130,7 @@ export function Sidebar({
             type="button"
             onClick={onToggleCollapse}
             title={isCollapsed ? "Expandir barra lateral" : "Colapsar barra lateral"}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-subtle border border-transparent hover:border-border transition cursor-pointer mx-auto"
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-subtle border border-transparent hover:border-border-subtle transition cursor-pointer mx-auto"
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
@@ -201,7 +201,7 @@ export function Sidebar({
                   title={isCollapsed ? horizon.label : undefined}
                   className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-xs transition cursor-pointer ${
                     isActive
-                      ? "bg-surface-subtle text-text-primary font-medium border border-border"
+                      ? "bg-surface-subtle text-text-primary font-medium border border-border-subtle"
                       : "text-text-muted hover:text-text-primary hover:bg-surface-subtle/60"
                   } ${isCollapsed ? "justify-center" : "justify-start"}`}
                 >
@@ -221,9 +221,9 @@ export function Sidebar({
       </div>
 
       {/* Footer info */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-border-subtle">
         <div
-          className={`flex items-center gap-2 p-1.5 rounded-lg bg-surface-subtle/40 border border-border/50 ${
+          className={`flex items-center gap-2 p-1.5 rounded-lg bg-surface-subtle/40 border border-border-subtle/50 ${
             isCollapsed ? "justify-center" : ""
           }`}
         >

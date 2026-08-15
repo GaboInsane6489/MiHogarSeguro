@@ -37,7 +37,7 @@ const AREA_META: Record<
     label: "Todas las Áreas",
     icon: LayoutDashboard,
     colorClass: "text-text-primary",
-    borderClass: "border-border",
+    borderClass: "border-border-subtle",
     bgClass: "bg-surface-subtle",
   },
   trabajo: {
@@ -276,7 +276,7 @@ export default function Home() {
       <main className="flex-1 flex flex-col h-full overflow-y-auto">
         <div className="max-w-4xl w-full mx-auto p-6 md:p-8 space-y-6">
           {/* Header dinámico por Área */}
-          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border">
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border-subtle">
             <div className="flex items-center gap-3">
               <div
                 className={`w-10 h-10 rounded-xl flex items-center justify-center border ${activeAreaMeta.bgClass} ${activeAreaMeta.borderClass}`}
@@ -291,7 +291,7 @@ export default function Home() {
                     {activeAreaMeta.label}
                   </h1>
                   {currentHorizon !== "all" && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-subtle border border-border text-text-muted">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-surface-subtle border border-border-subtle text-text-muted">
                       {HORIZON_LABELS[currentHorizon].label}
                     </span>
                   )}
@@ -303,7 +303,7 @@ export default function Home() {
             </div>
 
             {/* Filtros de estado */}
-            <div className="flex gap-1 bg-surface p-1 rounded-lg border border-border text-xs text-text-muted">
+            <div className="flex gap-1 bg-surface p-1 rounded-lg border border-border-subtle text-xs text-text-muted">
               <button
                 type="button"
                 onClick={() => setStatusFilter("all")}
@@ -341,21 +341,21 @@ export default function Home() {
           </header>
 
           {/* Formulario de captura rápida Notion-like */}
-          <section className="bg-surface border border-border p-5 rounded-2xl shadow-lg my-6 space-y-4">
+          <section className="bg-surface border border-border-subtle p-5 rounded-2xl shadow-lg my-6 space-y-4">
             <AiTaskInput
               value={inputTitle}
               onChange={setInputTitle}
               category={currentArea === "all" ? inputArea : currentArea}
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/50">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border-subtle/50">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Área si está en 'all' */}
                 {currentArea === "all" && (
                   <select
                     value={inputArea}
                     onChange={(e) => setInputArea(e.target.value as AreaType)}
-                    className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer capitalize transition-colors"
+                    className="bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer capitalize transition-colors"
                   >
                     <option value="personal">Personal & AI</option>
                     <option value="trabajo">Trabajo</option>
@@ -374,7 +374,7 @@ export default function Home() {
                     setInputHorizon(e.target.value as HorizonType)
                   }
                   disabled={currentHorizon !== "all"}
-                  className="bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer disabled:opacity-50 transition-colors"
+                  className="bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   <option value="hoy">Horizonte: Hoy</option>
                   <option value="corto">Horizonte: Corto Plazo</option>
@@ -403,7 +403,7 @@ export default function Home() {
             </div>
 
             {filteredTasks.length === 0 ? (
-              <div className="text-center py-12 px-4 rounded-xl border border-dashed border-border bg-surface/40 space-y-1">
+              <div className="text-center py-12 px-4 rounded-xl border border-dashed border-border-subtle bg-surface/40 space-y-1">
                 <p className="text-sm text-text-primary font-medium">
                   No hay entradas en esta vista
                 </p>
@@ -423,7 +423,7 @@ export default function Home() {
                   return (
                     <li
                       key={task.id}
-                      className="group flex items-center justify-between bg-surface border border-border hover:border-text-muted/30 p-3.5 rounded-xl transition shadow-xs cursor-pointer"
+                      className="group flex items-center justify-between bg-surface border border-border-subtle hover:border-text-muted/40 p-3.5 rounded-xl transition shadow-xs cursor-pointer"
                     >
                       <div
                         onClick={() => setSelectedEntry(task)}
@@ -464,7 +464,7 @@ export default function Home() {
                             </span>
 
                             {/* Tag de Horizonte */}
-                            <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-subtle border border-border px-2 py-0.5 rounded-md">
+                            <span className="flex items-center gap-1 text-[10px] text-text-muted bg-surface-subtle border border-border-subtle px-2 py-0.5 rounded-md">
                               <HorizonIcon className="w-3 h-3" />
                               <span>{horizonInfo.label}</span>
                             </span>

@@ -65,10 +65,10 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
   };
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-full max-w-md bg-surface border-l border-border z-50 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
+    <aside className="fixed inset-y-0 right-0 w-full max-w-md bg-surface border-l border-border-subtle z-50 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
       <div className="space-y-6 overflow-y-auto pr-1">
         {/* Header con botón de cerrar */}
-        <div className="flex items-center justify-between pb-4 border-b border-border">
+        <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
           <span className="text-xs font-bold text-text-muted uppercase tracking-wider">
             Detalle de la Entrada
           </span>
@@ -91,7 +91,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Título de la entrada..."
-            className="w-full bg-surface-subtle border border-border rounded-xl px-3.5 py-2.5 text-base font-semibold text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-ai/60 transition"
+            className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3.5 py-2.5 text-base font-semibold text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-ai/60 transition"
           />
         </div>
 
@@ -104,7 +104,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
             <select
               value={area}
               onChange={(e) => setArea(e.target.value as AreaType)}
-              className="w-full bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai/60 cursor-pointer capitalize transition"
+              className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai/60 cursor-pointer capitalize transition"
             >
               <option value="personal">Personal & AI</option>
               <option value="trabajo">Trabajo</option>
@@ -121,7 +121,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
             <select
               value={horizon}
               onChange={(e) => setHorizon(e.target.value as HorizonType)}
-              className="w-full bg-surface-subtle border border-border rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai/60 cursor-pointer transition"
+              className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai/60 cursor-pointer transition"
             >
               <option value="hoy">Hoy</option>
               <option value="corto">Corto Plazo</option>
@@ -140,13 +140,13 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Escribe notas, subtareas, contexto o detalles de esta entrada..."
-            className="w-full bg-surface-subtle border border-border rounded-xl p-3.5 text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-ai/60 resize-none h-48 transition font-sans"
+            className="w-full bg-surface-subtle border border-border-subtle rounded-xl p-3.5 text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-ai/60 resize-none h-48 transition font-sans"
           />
         </div>
       </div>
 
       {/* Footer con botón de guardar */}
-      <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+      <div className="pt-4 border-t border-border-subtle flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={onClose}
