@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     {
-      /* Entra en acción el Gemini */
+      /* Entra en acción el ricolino Gemini */
     }
     const response = await ai.models.generateContent({
       model: "gemini-3.6-flash",
