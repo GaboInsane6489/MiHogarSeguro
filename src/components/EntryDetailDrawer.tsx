@@ -39,7 +39,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
-  // Invocación a Gemini para desglose estructurado
+  // Invocacion a Gemini para desglose estructurado
   const handleBreakdownAI = async () => {
     if (!title.trim()) return;
     setIsGeneratingAI(true);
@@ -97,7 +97,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
   };
 
-  // Añadir un nuevo bloque manualmente
+  // Anadir un nuevo bloque manualmente
   const handleAddBlock = (type: BlockType = "todo") => {
     const newBlock: BlockItem = {
       id: `block-${Date.now()}`,
@@ -129,12 +129,12 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
   };
 
   return (
-    <aside className="fixed inset-y-0 right-0 w-full max-w-lg bg-surface border-l border-border-subtle z-50 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
+    <aside className="fixed inset-y-0 right-0 w-full max-w-lg bg-surface/95 backdrop-blur-xl border-l border-border-subtle z-50 p-6 shadow-2xl flex flex-col justify-between animate-in slide-in-from-right duration-200">
       <div className="space-y-6 overflow-y-auto pr-1">
-        {/* Header con botón de cerrar */}
+        {/* Header con boton de cerrar */}
         <div className="flex items-center justify-between pb-4 border-b border-border-subtle">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider font-mono">
               Detalle & Bloques
             </span>
           </div>
@@ -147,25 +147,25 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
           </button>
         </div>
 
-        {/* Título editable */}
+        {/* Titulo editable */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-text-muted">
-            Título
+            Titulo
           </label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Título de la entrada..."
-            className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3.5 py-2.5 text-base font-semibold text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-ai/60 transition"
+            placeholder="Titulo de la entrada..."
+            className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3.5 py-2.5 text-sm font-semibold text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-ai/60 transition"
           />
         </div>
 
-        {/* Selectores de Área y Horizonte */}
+        {/* Selectores de Area y Horizonte */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-text-muted">
-              Área
+              Area
             </label>
             <select
               value={area}
@@ -197,14 +197,14 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
           </div>
         </div>
 
-        {/* Sección de Bloques de Contenido y Botón AI */}
+        {/* Seccion de Bloques de Contenido y Boton AI */}
         <div className="space-y-3 pt-2 border-t border-border-subtle/60">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-text-muted uppercase tracking-wider">
-              Bloques de Contenido ({blocks.length})
+            <label className="text-xs font-bold text-text-muted uppercase tracking-wider font-mono">
+              Bloques ({blocks.length})
             </label>
 
-            {/* Botón Desglosar con AI */}
+            {/* Boton Desglosar con AI */}
             <button
               type="button"
               onClick={handleBreakdownAI}
@@ -224,7 +224,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
           {blocks.length === 0 ? (
             <div className="text-center py-8 px-4 rounded-xl border border-dashed border-border-subtle bg-surface-subtle/30 space-y-2">
               <p className="text-xs text-text-muted">
-                No hay bloques de contenido todavía.
+                No hay bloques de contenido todavia.
               </p>
               <button
                 type="button"
@@ -293,7 +293,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
                         onChange={(e) =>
                           handleUpdateBlockContent(block.id, e.target.value)
                         }
-                        placeholder="Subtarea o ítem accionable..."
+                        placeholder="Subtarea o item accionable..."
                         className={`w-full bg-transparent text-xs focus:outline-none transition ${
                           isCompleted
                             ? "line-through text-text-muted opacity-60"
@@ -317,7 +317,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
                     key={block.id}
                     className="group flex items-start gap-2.5 bg-surface-subtle/40 border border-border-subtle px-3 py-2 rounded-xl"
                   >
-                    <span className="text-text-muted text-xs select-none mt-0.5">•</span>
+                    <span className="text-text-muted text-xs select-none mt-0.5">-</span>
                     <input
                       type="text"
                       value={block.content}
@@ -340,7 +340,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
             </div>
           )}
 
-          {/* Botón rápido para añadir bloques manualmente */}
+          {/* Boton rapido para anadir bloques manualmente */}
           <div className="flex items-center gap-2 pt-1">
             <button
               type="button"
@@ -362,7 +362,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
         </div>
       </div>
 
-      {/* Footer con botón de guardar */}
+      {/* Footer con boton de guardar */}
       <div className="pt-4 border-t border-border-subtle flex items-center justify-end gap-3">
         <button
           type="button"
@@ -399,13 +399,13 @@ export function EntryDetailDrawer({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop con desenfoque de cristal */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/75 backdrop-blur-md z-40 transition-opacity"
       />
 
-      {/* Formulario con key para reinicio de estado automático sin useEffect */}
+      {/* Formulario con key para reinicio de estado automatico */}
       <EntryDetailForm
         key={entry.id}
         entry={entry}
