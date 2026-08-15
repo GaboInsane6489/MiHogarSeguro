@@ -1,0 +1,112 @@
+{
+  "name": "Second Brain - Daily Briefing Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger 06:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "id": "schedule-trigger-1"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SITE_URL || 'http://localhost:3000' }}/api/webhook/n8n?horizon=hoy",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-api-key",
+              "value": "={{ $env.N8N_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Today Entries",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "id": "http-request-entries"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst entries = response.entries || [];\n\nif (entries.length === 0) {\n  return [{\n    json: {\n      message: \"🌅 *Second Brain | Briefing Diario*\\n\\n¡Todo limpio! No tienes tareas pendientes registradas para hoy.\"\n    }\n  }];\n}\n\nconst AREA_ICONS = {\n  trabajo: \"💼\",\n  universidad: \"🎓\",\n  gimnasio: \"🏋️\",\n  cashea: \"💳\",\n  personal: \"🧠\"\n};\n\nconst grouped = {};\nentries.forEach(entry => {\n  const area = entry.area || 'personal';\n  if (!grouped[area]) grouped[area] = [];\n  grouped[area].push(entry);\n});\n\nlet message = `🌅 *Second Brain | Briefing Diario*\\n📅 *Total de pendientes:* ${entries.length}\\n\\n`;\n\nfor (const [area, tasks] of Object.entries(grouped)) {\n  const icon = AREA_ICONS[area] || '📌';\n  const areaName = area.toUpperCase();\n  message += `${icon} *${areaName}* (${tasks.length})\\n`;\n  \n  tasks.forEach(t => {\n    message += `  • ${t.title}\\n`;\n    if (t.content && Array.isArray(t.content) && t.content.length > 0) {\n      t.content.forEach(b => {\n        if (b.type === 'todo') {\n          const done = b.metadata?.is_completed ? '✅' : '⏳';\n          message += `    ${done} ${b.content}\\n`;\n        }\n      });\n    }\n  });\n  message += `\\n`;\n}\n\nmessage += `⚡ _¡A por un día productivo!_`;\n\nreturn [{\n  json: {\n    message,\n    total: entries.length\n  }\n}];"
+      },
+      "name": "Format Daily Briefing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "id": "format-code-node"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [900, 300],
+      "id": "telegram-send-node",
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-credentials-id",
+          "name": "Telegram Bot Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger 06:00": {
+      "main": [
+        [
+          {
+            "node": "Fetch Today Entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Today Entries": {
+      "main": [
+        [
+          {
+            "node": "Format Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Daily Briefing": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Caracas"
+  }
+}
