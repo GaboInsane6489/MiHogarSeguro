@@ -421,7 +421,19 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-[#090d16] overflow-hidden text-zinc-100 font-sans">
+    <div className="relative flex h-screen bg-[#090d16] overflow-hidden text-zinc-100 font-sans">
+      {/* Fondo Ambiental Personalizado de la App si existe banner_url */}
+      {profile?.banner_url && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 transition-all duration-700 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${profile.banner_url})`,
+            opacity: 0.1,
+            filter: "blur(32px) saturate(1.3)",
+            transform: "scale(1.05)",
+          }}
+        />
+      )}
       {/* Sidebar lateral */}
       <Sidebar
         currentArea={currentArea}
@@ -837,6 +849,7 @@ export default function Home() {
 
       {/* Modal de Ajustes de Perfil & Contexto de IA */}
       <ProfileSettingsModal
+        key={`profile-modal-${profile?.updated_at || profile?.id || "default"}`}
         isOpen={isProfileDrawerOpen}
         onClose={() => setIsProfileDrawerOpen(false)}
         user={user}
