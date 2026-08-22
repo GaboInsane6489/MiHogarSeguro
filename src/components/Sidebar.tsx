@@ -14,10 +14,9 @@ import {
   ChevronRight,
   Compass,
   Milestone,
+  Settings,
   LogOut,
   LogIn,
-  Settings,
-  Sparkles,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { AreaType, HorizonType, UserProfile } from "@/types/database.types";
@@ -264,12 +263,15 @@ export function Sidebar({
             type="button"
             onClick={onOpenChat}
             title={isCollapsed ? "Abrir Copiloto AI" : undefined}
-            className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-indigo-300 text-xs font-semibold transition cursor-pointer ${
+            className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-indigo-500/40 text-zinc-200 hover:text-white text-xs font-semibold transition cursor-pointer group ${
               isCollapsed ? "justify-center" : "justify-start"
             }`}
           >
-            <Sparkles className="w-4 h-4 shrink-0 text-indigo-400" />
-            {!isCollapsed && <span>Copiloto AI</span>}
+            <div className="relative shrink-0 flex items-center justify-center">
+              <BrandLogo size={16} className="transition-transform group-hover:scale-110" />
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            {!isCollapsed && <span className="flex-1 text-left">Copiloto AI</span>}
           </button>
         )}
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Loader2, Wand2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import type { AiContextData } from "@/types/database.types";
 
 interface AiTaskInputProps {
@@ -42,27 +43,32 @@ export function AiTaskInput({ value, onChange, category, aiContext }: AiTaskInpu
 
   return (
     <div className="relative flex items-center w-full">
-      <Wand2 className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4 text-zinc-400" />
+      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+        <BrandLogo size={15} className="opacity-70" />
+      </div>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Escribe una nota, tarea o idea para capturar..."
-        className="w-full h-11 bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-28 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+        className="w-full h-11 bg-zinc-900/80 border border-white/10 rounded-xl pl-10 pr-32 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/50 transition-all"
       />
       <button
         type="button"
         onClick={handleGenerateAI}
         disabled={loadingAI}
-        title="Generar sugerencia con Gemini AI"
-        className="h-8 absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 text-xs bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 border border-indigo-500/30 rounded-lg flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40"
+        title="Generar sugerencia inteligente con IA"
+        className="h-8 absolute right-1.5 top-1/2 -translate-y-1/2 px-2.5 text-xs bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/10 hover:border-indigo-500/40 rounded-lg flex items-center gap-1.5 transition cursor-pointer disabled:opacity-40 group"
       >
         {loadingAI ? (
-          <Loader2 className="w-3.5 h-3.5 text-indigo-300 animate-spin" />
+          <Loader2 className="w-3.5 h-3.5 text-indigo-400 animate-spin" />
         ) : (
-          <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+          <div className="relative flex items-center justify-center">
+            <BrandLogo size={14} className="transition-transform group-hover:scale-110" />
+            <span className="absolute -top-0.5 -right-0.5 w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
         )}
-        <span>{loadingAI ? "Pensando..." : "Gemini AI"}</span>
+        <span className="font-medium">{loadingAI ? "Pensando..." : "Copiloto AI"}</span>
       </button>
     </div>
   );

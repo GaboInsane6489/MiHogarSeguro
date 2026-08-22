@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { AiTaskInput } from "@/components/AiTaskInput";
 import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
 import { AuthModal } from "@/components/AuthModal";
+import { BrandLogo } from "@/components/BrandLogo";
 import { ProfileSettingsModal } from "@/components/ProfileSettingsModal";
 import { SecondBrainChatDrawer } from "@/components/SecondBrainChatDrawer";
 import type {
@@ -873,10 +874,19 @@ export default function Home() {
         type="button"
         onClick={() => setIsChatOpen(true)}
         title="Abrir Copiloto AI"
-        className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-semibold shadow-xl shadow-indigo-600/30 border border-indigo-400/30 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+        className="fixed bottom-6 right-6 z-30 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#0d1117]/95 hover:bg-[#161b22] text-zinc-100 hover:text-white text-xs font-semibold shadow-2xl hover:shadow-indigo-500/25 border border-white/15 hover:border-indigo-500/50 backdrop-blur-xl transition-all hover:scale-105 active:scale-95 cursor-pointer group"
       >
-        <Sparkles className="w-4 h-4 text-indigo-200 animate-pulse group-hover:rotate-12 transition-transform" />
-        <span className="hidden sm:inline">Copiloto AI</span>
+        <div className="relative flex items-center justify-center">
+          <BrandLogo
+            size={18}
+            className="transition-transform group-hover:rotate-6"
+          />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-[#0d1117] animate-pulse" />
+        </div>
+        <span className="tracking-wide">Copiloto AI</span>
+        <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono text-zinc-400 group-hover:text-indigo-300">
+          Chat
+        </span>
       </button>
 
       {/* Drawer de Chat con el Second Brain */}
