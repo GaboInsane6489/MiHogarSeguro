@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { AiTaskInput } from "@/components/AiTaskInput";
 import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
 import { AuthModal } from "@/components/AuthModal";
-import { ProfileSettingsDrawer } from "@/components/ProfileSettingsDrawer";
+import { ProfileSettingsModal } from "@/components/ProfileSettingsModal";
 import { SecondBrainChatDrawer } from "@/components/SecondBrainChatDrawer";
 import type {
   EntryItem,
@@ -386,6 +386,19 @@ export default function Home() {
       ? Math.round((todayCompleted / todayTasks.length) * 100)
       : 0;
 
+  // Conteo de tareas pendientes por area
+  const taskCounts = useMemo(() => {
+    const counts: Record<AreaType | "all", number> = {
+      all: tasks.filter((t) => !t.is_completed).length,
+      trabajo: tasks.filter((t) => t.area === "trabajo" && !t.is_completed).length,
+      universidad: tasks.filter((t) => t.area === "universidad" && !t.is_completed).length,
+      gimnasio: tasks.filter((t) => t.area === "gimnasio" && !t.is_completed).length,
+      cashea: tasks.filter((t) => t.area === "cashea" && !t.is_completed).length,
+      personal: tasks.filter((t) => t.area === "personal" && !t.is_completed).length,
+    };
+    return counts;
+  }, [tasks]);
+
   const activeAreaMeta = AREA_META[currentArea];
   const ActiveAreaIcon = activeAreaMeta.icon;
 
@@ -419,6 +432,7 @@ export default function Home() {
         onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         user={user}
         profile={profile}
+        taskCounts={taskCounts}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenProfile={() => setIsProfileDrawerOpen(true)}
         onOpenChat={() => setIsChatOpen(true)}
@@ -616,10 +630,28 @@ export default function Home() {
                     HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
                   const HorizonIcon = horizonInfo.icon;
 
+                  const totalTodos = task.content
+                    ? task.content.filter((b) => b.type === "todo").length
+                    : 0;
+                  const completedTodos = task.content
+                    ? task.content.filter((b) => b.type === "todo" && b.metadata?.is_completed).length
+                    : 0;
+
+                  const areaBorderAccent =
+                    task.area === "trabajo"
+                      ? "border-l-sky-400"
+                      : task.area === "universidad"
+                        ? "border-l-emerald-400"
+                        : task.area === "gimnasio"
+                          ? "border-l-rose-400"
+                          : task.area === "cashea"
+                            ? "border-l-amber-400"
+                            : "border-l-indigo-400";
+
                   return (
                     <div
                       key={task.id}
-                      className="flex items-center justify-between p-3.5 rounded-xl bg-[#161b22]/70 hover:bg-[#161b22] border border-white/5 hover:border-white/15 transition-all group"
+                      className={`flex items-center justify-between p-3.5 rounded-xl bg-[#161b22]/70 hover:bg-[#161b22] border border-white/5 hover:border-white/20 border-l-2 ${areaBorderAccent} transition-all hover:translate-x-0.5 group shadow-sm`}
                     >
                       <div
                         onClick={() => setSelectedEntry(task)}
@@ -724,6 +756,22 @@ export default function Home() {
                             );
                           })()}
 
+                        {/* Indicador de Subtareas */}
+                        {totalTodos > 0 && (
+                          <span
+                            className={`flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded-md border ${
+                              completedTodos === totalTodos
+                                ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+                                : "bg-white/5 border-white/10 text-zinc-400"
+                            }`}
+                          >
+                            <CheckCircle2 className="w-2.5 h-2.5" />
+                            <span>
+                              {completedTodos}/{totalTodos}
+                            </span>
+                          </span>
+                        )}
+
                         {/* Indicador de Adjuntos de Archivos */}
                         {task.content &&
                           task.content.some((b) => b.type === "file") && (
@@ -787,8 +835,8 @@ export default function Home() {
         }}
       />
 
-      {/* Drawer de Perfil & Contexto de IA */}
-      <ProfileSettingsDrawer
+      {/* Modal de Ajustes de Perfil & Contexto de IA */}
+      <ProfileSettingsModal
         isOpen={isProfileDrawerOpen}
         onClose={() => setIsProfileDrawerOpen(false)}
         user={user}

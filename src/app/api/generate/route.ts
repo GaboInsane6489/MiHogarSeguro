@@ -9,6 +9,7 @@ interface GeneratePayload {
   area?: AreaType;
   horizon?: HorizonType;
   aiContext?: AiContextData;
+  userNotes?: string;
 }
 
 const DOMAIN_INSTRUCTIONS: Record<AreaType, string> = {
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
     const horizon = body.horizon || "hoy";
     const input = body.input || body.prompt || "";
     const aiContext = body.aiContext;
+    const userNotes = body.userNotes?.trim();
 
     const domainInstruction = DOMAIN_INSTRUCTIONS[area] || DOMAIN_INSTRUCTIONS.personal;
 
@@ -117,13 +119,20 @@ export async function POST(request: Request) {
 
     // MODO 2: Desglose estructurado en bloques (BlockItem[])
     if (mode === "breakdown") {
+      const specificNotesInstruction = userNotes
+        ? `\n\nDIRECTIVAS Y CONTEXTO ESPECÍFICO DEL USUARIO PARA ESTA TAREA:\n"${userNotes}"\n(Asegúrate de que el desglose de subtareas y bloques refleje con precisión estas directivas y restricciones)`
+        : "";
+
       const systemInstruction = `Eres el asistente de organización inteligente de un Second Brain de alto rendimiento.
 ${domainInstruction}
 ${userContextString}
+${specificNotesInstruction}
 
 Tu objetivo es estructurar la entrada en una lista de bloques heterogéneos accionables ('heading', 'paragraph', 'todo', 'bullet', 'code', 'callout') que permitan una ejecución inmediata.`;
 
-      const userPrompt = `Desglosa la siguiente entrada: "${input}". Área de enfoque: ${area}. Horizonte temporal: ${horizon}.`;
+      const userPrompt = userNotes
+        ? `Desglosa la tarea principal: "${input}".\nContexto adicional del usuario: "${userNotes}".\nÁrea: ${area}. Horizonte: ${horizon}.`
+        : `Desglosa la siguiente entrada: "${input}". Área de enfoque: ${area}. Horizonte temporal: ${horizon}.`;
 
       const response = await generateWithFallback(ai, {
         contents: userPrompt,
