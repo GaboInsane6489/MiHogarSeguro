@@ -17,6 +17,7 @@ import {
   LogOut,
   LogIn,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import type { AreaType, HorizonType, UserProfile } from "@/types/database.types";
@@ -33,6 +34,7 @@ interface SidebarProps {
   profile?: UserProfile | null;
   onOpenAuth?: () => void;
   onOpenProfile?: () => void;
+  onOpenChat?: () => void;
   onLogout?: () => Promise<void>;
 }
 
@@ -114,6 +116,7 @@ export function Sidebar({
   profile,
   onOpenAuth,
   onOpenProfile,
+  onOpenChat,
   onLogout,
 }: SidebarProps) {
   const displayName = profile?.full_name?.trim() || user?.email?.split("@")[0] || "Usuario";
@@ -238,8 +241,23 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* Footer / User Profile & Auth */}
+        {/* Footer / User Profile & Auth */}
       <div className="p-3 pt-3 border-t border-white/5 space-y-2">
+        {/* Boton Acceso Rapido a Copiloto AI */}
+        {onOpenChat && (
+          <button
+            type="button"
+            onClick={onOpenChat}
+            title={isCollapsed ? "Abrir Copiloto AI" : undefined}
+            className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 text-indigo-300 text-xs font-semibold transition cursor-pointer ${
+              isCollapsed ? "justify-center" : "justify-start"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 shrink-0 text-indigo-400" />
+            {!isCollapsed && <span>Copiloto AI</span>}
+          </button>
+        )}
+
         {user ? (
           <div
             onClick={onOpenProfile}

@@ -8,6 +8,7 @@ import { AiTaskInput } from "@/components/AiTaskInput";
 import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
 import { AuthModal } from "@/components/AuthModal";
 import { ProfileSettingsDrawer } from "@/components/ProfileSettingsDrawer";
+import { SecondBrainChatDrawer } from "@/components/SecondBrainChatDrawer";
 import type { EntryItem, AreaType, HorizonType, UserProfile } from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
 import {
@@ -112,6 +113,7 @@ export default function Home() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Filtros de navegacion
   const [currentArea, setCurrentArea] = useState<AreaType | "all">("all");
@@ -403,6 +405,7 @@ export default function Home() {
         profile={profile}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onOpenProfile={() => setIsProfileDrawerOpen(true)}
+        onOpenChat={() => setIsChatOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -768,6 +771,25 @@ export default function Home() {
         onProfileUpdated={(updatedProfile) => {
           setProfile(updatedProfile);
         }}
+      />
+
+      {/* Boton Flotante de Acceso a Copiloto AI */}
+      <button
+        type="button"
+        onClick={() => setIsChatOpen(true)}
+        title="Abrir Copiloto AI"
+        className="fixed bottom-6 right-6 z-30 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-semibold shadow-xl shadow-indigo-600/30 border border-indigo-400/30 transition-all hover:scale-105 active:scale-95 cursor-pointer group"
+      >
+        <Sparkles className="w-4 h-4 text-indigo-200 animate-pulse group-hover:rotate-12 transition-transform" />
+        <span className="hidden sm:inline">Copiloto AI</span>
+      </button>
+
+      {/* Drawer de Chat con el Second Brain */}
+      <SecondBrainChatDrawer
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        tasks={tasks}
+        aiContext={profile?.ai_context}
       />
 
       {/* Drawer lateral de detalles */}
