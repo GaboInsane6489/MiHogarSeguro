@@ -9,9 +9,12 @@ import {
   RotateCcw,
   Bot,
   User as UserIcon,
+  Plus,
+  Check,
+  Copy,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
-import type { EntryItem, AiContextData } from "@/types/database.types";
+import type { EntryItem, AiContextData, AreaType, HorizonType, PriorityType } from "@/types/database.types";
 
 interface Message {
   id: string;
@@ -25,6 +28,12 @@ interface SecondBrainChatDrawerProps {
   onClose: () => void;
   tasks: EntryItem[];
   aiContext?: AiContextData;
+  onAddTask?: (taskData: {
+    title: string;
+    area: AreaType;
+    horizon: HorizonType;
+    priority?: PriorityType;
+  }) => Promise<void>;
 }
 
 const QUICK_PROMPTS = [
@@ -40,18 +49,21 @@ export function SecondBrainChatDrawer({
   onClose,
   tasks,
   aiContext,
+  onAddTask,
 }: SecondBrainChatDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "initial-msg",
       role: "assistant",
       content:
-        "Hola. Soy tu Copiloto del Second Brain. Tengo acceso en tiempo real a tus tareas, áreas, prioridades y fechas límite. ¿En qué te ayudo a enfocarte hoy?",
+        "Hola. Soy tu Copiloto Universal y Asistente del Second Brain. Puedes preguntarme sobre cualquier tema o pedirme que planifique y cree tareas en tu workspace. ¿En qué te ayudo hoy?",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [addedTasks, setAddedTasks] = useState<Record<string, boolean>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -209,6 +221,29 @@ export function SecondBrainChatDrawer({
           {messages.map((message) => {
             const isUser = message.role === "user";
 
+            // Parsear acciones de creacion de tareas si existen
+            let cleanContent = message.content;
+            let parsedAction: {
+              title: string;
+              area?: AreaType;
+              horizon?: HorizonType;
+              priority?: PriorityType;
+            } | null = null;
+
+            const actionMatch = message.content.match(
+              /```task_action\s*([\s\S]*?)\s*```/
+            );
+            if (actionMatch) {
+              try {
+                parsedAction = JSON.parse(actionMatch[1]);
+                cleanContent = message.content
+                  .replace(/```task_action\s*[\s\S]*?\s*```/, "")
+                  .trim();
+              } catch {
+                // Ignore parse error
+              }
+            }
+
             return (
               <div
                 key={message.id}
@@ -223,27 +258,111 @@ export function SecondBrainChatDrawer({
                 )}
 
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3.5 space-y-1.5 ${
+                  className={`max-w-[88%] rounded-2xl p-3.5 space-y-2.5 ${
                     isUser
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/10 rounded-tr-xs"
                       : "bg-[#161b22] border border-white/10 text-zinc-200 rounded-tl-xs"
                   }`}
                 >
                   {/* Contenido con formateo multilínea */}
-                  <div className="whitespace-pre-wrap font-sans text-xs select-text">
-                    {message.content}
+                  <div className="whitespace-pre-wrap font-sans text-xs select-text leading-relaxed">
+                    {cleanContent}
                   </div>
 
-                  <span
-                    className={`block text-[9px] font-mono text-right ${
-                      isUser ? "text-indigo-200/70" : "text-zinc-500"
-                    }`}
-                  >
-                    {message.timestamp.toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                  {/* Tarjeta Interactiva de Creacion de Tarea */}
+                  {parsedAction && onAddTask && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-zinc-900/90 border border-indigo-500/30 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase tracking-wider">
+                          Acción sugerida: Crear Tarea
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {parsedAction.area && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 capitalize font-mono border border-indigo-500/20">
+                              {parsedAction.area}
+                            </span>
+                          )}
+                          {parsedAction.priority && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 capitalize font-mono border border-amber-500/20">
+                              {parsedAction.priority}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="text-xs font-semibold text-zinc-100">
+                        {parsedAction.title}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (parsedAction && !addedTasks[message.id]) {
+                            await onAddTask({
+                              title: parsedAction.title,
+                              area: parsedAction.area || "personal",
+                              horizon: parsedAction.horizon || "hoy",
+                              priority: parsedAction.priority || "media",
+                            });
+                            setAddedTasks((prev) => ({
+                              ...prev,
+                              [message.id]: true,
+                            }));
+                          }
+                        }}
+                        disabled={addedTasks[message.id]}
+                        className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          addedTasks[message.id]
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 cursor-default"
+                            : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
+                        }`}
+                      >
+                        {addedTasks[message.id] ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Agregada al Workspace</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Agregar a mi Workspace</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                    {!isUser && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(cleanContent);
+                          setCopiedId(message.id);
+                          setTimeout(() => setCopiedId(null), 2000);
+                        }}
+                        className="text-[10px] text-zinc-500 hover:text-zinc-300 flex items-center gap-1 transition"
+                      >
+                        {copiedId === message.id ? (
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3 h-3" />
+                        )}
+                        <span>{copiedId === message.id ? "Copiado" : "Copiar"}</span>
+                      </button>
+                    )}
+
+                    <span
+                      className={`block text-[9px] font-mono ml-auto ${
+                        isUser ? "text-indigo-200/70" : "text-zinc-500"
+                      }`}
+                    >
+                      {message.timestamp.toLocaleTimeString("es-ES", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
 
                 {isUser && (

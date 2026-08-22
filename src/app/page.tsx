@@ -815,6 +815,28 @@ export default function Home() {
         onClose={() => setIsChatOpen(false)}
         tasks={tasks}
         aiContext={profile?.ai_context}
+        onAddTask={async (taskData) => {
+          if (!user) return;
+          const { data, error } = await supabaseClient
+            .from("entries")
+            .insert({
+              title: taskData.title,
+              area: taskData.area,
+              horizon: taskData.horizon,
+              priority: taskData.priority || "media",
+              content: [],
+              is_completed: false,
+              user_id: user.id,
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error("Error al crear tarea desde chat:", error.message);
+          } else if (data) {
+            setTasks((prev) => [...prev, data]);
+          }
+        }}
       />
 
       {/* Drawer lateral de detalles */}
