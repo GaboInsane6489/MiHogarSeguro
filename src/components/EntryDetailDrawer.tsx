@@ -49,6 +49,8 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
   );
   const [priority, setPriority] = useState<PriorityType>(entry.priority || "media");
   const [blocks, setBlocks] = useState<BlockItem[]>(entry.content || []);
+  const [userContextNotes, setUserContextNotes] = useState("");
+  const [showContextInput, setShowContextInput] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
@@ -68,6 +70,7 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
           area,
           horizon,
           aiContext,
+          userNotes: userContextNotes.trim() || undefined,
         }),
       });
 
@@ -296,21 +299,52 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
               Bloques ({blocks.length})
             </label>
 
-            {/* Boton Desglosar con AI */}
-            <button
-              type="button"
-              onClick={handleBreakdownAI}
-              disabled={isGeneratingAI || !title.trim()}
-              className="bg-ai/15 hover:bg-ai/25 text-ai border border-ai/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 disabled:opacity-40"
-            >
-              {isGeneratingAI ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              <span>{isGeneratingAI ? "Desglosando..." : "Desglosar con AI"}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowContextInput((prev) => !prev)}
+                className={`text-[11px] px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                  showContextInput || userContextNotes.trim()
+                    ? "bg-ai/15 text-ai border-ai/30 font-medium"
+                    : "text-text-muted border-border-subtle hover:text-text-primary hover:bg-surface-subtle"
+                }`}
+                title="Añadir contexto específico para la IA"
+              >
+                {userContextNotes.trim() ? "Contexto Activo" : "+ Contexto IA"}
+              </button>
+
+              {/* Boton Desglosar con AI */}
+              <button
+                type="button"
+                onClick={handleBreakdownAI}
+                disabled={isGeneratingAI || !title.trim()}
+                className="bg-ai/15 hover:bg-ai/25 text-ai border border-ai/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1.5 disabled:opacity-40"
+              >
+                {isGeneratingAI ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span>{isGeneratingAI ? "Desglosando..." : "Desglosar con AI"}</span>
+              </button>
+            </div>
           </div>
+
+          {/* Campo Opcional de Contexto de Usuario para la IA */}
+          {(showContextInput || userContextNotes.trim()) && (
+            <div className="p-2.5 rounded-xl bg-ai/5 border border-ai/20 space-y-1 animate-in fade-in duration-150">
+              <span className="text-[10px] font-mono text-ai font-semibold uppercase tracking-wider block">
+                Directivas o Contexto Personalizado para la IA:
+              </span>
+              <textarea
+                rows={2}
+                value={userContextNotes}
+                onChange={(e) => setUserContextNotes(e.target.value)}
+                placeholder="Ej: El entregable es en PDF con normas APA, incluir 3 fases y fecha de entrega el viernes..."
+                className="w-full bg-surface-subtle border border-border-subtle rounded-lg p-2 text-xs text-text-primary placeholder-text-muted focus:outline-none focus:border-ai/60 resize-none transition"
+              />
+            </div>
+          )}
 
           {/* Lista de Bloques */}
           {blocks.length === 0 ? (

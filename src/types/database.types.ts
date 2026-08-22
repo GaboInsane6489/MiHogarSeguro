@@ -47,6 +47,7 @@ export type UserProfile = {
   id: string;
   full_name?: string | null;
   avatar_url?: string | null;
+  banner_url?: string | null;
   preferences?: Record<string, unknown> | null;
   ai_context: AiContextData;
   updated_at?: string;
@@ -94,6 +95,7 @@ export type Database = {
           id: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           preferences?: Record<string, unknown> | null;
           ai_context?: AiContextData;
           updated_at?: string;
@@ -103,6 +105,7 @@ export type Database = {
           id?: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          banner_url?: string | null;
           preferences?: Record<string, unknown> | null;
           ai_context?: AiContextData;
           updated_at?: string;

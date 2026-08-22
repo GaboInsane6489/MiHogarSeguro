@@ -32,6 +32,7 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
   user?: User | null;
   profile?: UserProfile | null;
+  taskCounts?: Record<AreaType | "all", number>;
   onOpenAuth?: () => void;
   onOpenProfile?: () => void;
   onOpenChat?: () => void;
@@ -114,6 +115,7 @@ export function Sidebar({
   onToggleCollapse,
   user,
   profile,
+  taskCounts,
   onOpenAuth,
   onOpenProfile,
   onOpenChat,
@@ -182,7 +184,7 @@ export function Sidebar({
                   type="button"
                   onClick={() => onSelectArea(area.id)}
                   title={isCollapsed ? area.label : undefined}
-                  className={`h-10 w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-3 ${
+                  className={`group h-10 w-full px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-3 ${
                     isActive
                       ? area.activeBgClass
                       : "text-zinc-400 hover:text-zinc-100 hover:bg-white/5"
@@ -194,7 +196,20 @@ export function Sidebar({
                     }`}
                   />
                   {!isCollapsed && (
-                    <span className="truncate">{area.label}</span>
+                    <>
+                      <span className="truncate flex-1 text-left">{area.label}</span>
+                      {taskCounts && (taskCounts[area.id] || 0) > 0 && (
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                            isActive
+                              ? "bg-white/15 text-white font-bold"
+                              : "bg-white/[0.04] text-zinc-500 group-hover:text-zinc-300"
+                          }`}
+                        >
+                          {taskCounts[area.id]}
+                        </span>
+                      )}
+                    </>
                   )}
                 </button>
               );
@@ -267,18 +282,27 @@ export function Sidebar({
             }`}
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center shrink-0">
-                <span className="text-[10px] font-bold text-indigo-400">
-                  {userInitials}
-                </span>
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/40 overflow-hidden flex items-center justify-center shrink-0">
+                {profile?.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatar_url}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-[10px] font-bold text-indigo-400 font-mono">
+                    {userInitials}
+                  </span>
+                )}
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col truncate">
                   <span className="text-xs font-semibold text-zinc-200 truncate group-hover:text-white">
                     {displayName}
                   </span>
-                  <span className="text-[9px] text-zinc-500 truncate">
-                    {user.email}
+                  <span className="text-[10px] text-zinc-500 truncate font-mono">
+                    {profile?.ai_context?.profession || user.email}
                   </span>
                 </div>
               )}
