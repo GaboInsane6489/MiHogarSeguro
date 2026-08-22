@@ -29,6 +29,8 @@ import {
   Edit3,
   Plus,
   Loader2,
+  Paperclip,
+  Flag,
 } from "lucide-react";
 
 type Filter = "all" | "pending" | "completed";
@@ -636,6 +638,77 @@ export default function Home() {
                           <HorizonIcon className="w-3 h-3" />
                           <span>{horizonInfo.label}</span>
                         </span>
+
+                        {/* Badge de Prioridad */}
+                        {task.priority && task.priority !== "media" && (
+                          <span
+                            className={`flex items-center gap-1 text-[10px] font-mono uppercase px-1.5 py-0.5 rounded-md border ${
+                              task.priority === "urgente"
+                                ? "text-rose-400 border-rose-500/40 bg-rose-500/15 font-bold"
+                                : task.priority === "alta"
+                                ? "text-amber-400 border-amber-500/30 bg-amber-500/10"
+                                : "text-zinc-500 border-white/5 bg-zinc-800/40"
+                            }`}
+                          >
+                            <Flag className="w-2.5 h-2.5" />
+                            <span>{task.priority}</span>
+                          </span>
+                        )}
+
+                        {/* Badge de Fecha Limite (due_date) */}
+                        {task.due_date && (
+                          (() => {
+                            const due = new Date(task.due_date);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const dueOnly = new Date(due);
+                            dueOnly.setHours(0, 0, 0, 0);
+                            const diffDays = Math.ceil(
+                              (dueOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                            );
+
+                            const isOverdue = diffDays < 0 && !task.is_completed;
+                            const isDueToday = diffDays === 0;
+
+                            const label = isOverdue
+                              ? "Vencida"
+                              : isDueToday
+                              ? "Vence Hoy"
+                              : due.toLocaleDateString("es-ES", {
+                                  day: "numeric",
+                                  month: "short",
+                                });
+
+                            return (
+                              <span
+                                className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border font-mono ${
+                                  isOverdue
+                                    ? "text-rose-400 border-rose-500/40 bg-rose-500/15 font-semibold"
+                                    : isDueToday
+                                    ? "text-amber-400 border-amber-500/40 bg-amber-500/15 font-medium"
+                                    : "text-zinc-400 border-white/10 bg-zinc-800/60"
+                                }`}
+                              >
+                                <Calendar className="w-2.5 h-2.5" />
+                                <span>{label}</span>
+                              </span>
+                            );
+                          })()
+                        )}
+
+                        {/* Indicador de Adjuntos de Archivos */}
+                        {task.content &&
+                          task.content.some((b) => b.type === "file") && (
+                            <span className="flex items-center gap-1 text-[10px] text-zinc-300 bg-zinc-800/90 border border-white/10 px-1.5 py-0.5 rounded-md">
+                              <Paperclip className="w-2.5 h-2.5 text-indigo-400" />
+                              <span>
+                                {
+                                  task.content.filter((b) => b.type === "file")
+                                    .length
+                                }
+                              </span>
+                            </span>
+                          )}
 
                         {/* Indicador de Bloques AI */}
                         {task.content && task.content.length > 0 && (

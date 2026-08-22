@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { supabaseClient } from "@/lib/supabase";
 import {
   X,
   Save,
@@ -11,8 +12,14 @@ import {
   CheckCircle2,
   Circle,
   Info,
+  Calendar,
+  Paperclip,
+  Link as LinkIcon,
+  ExternalLink,
+  FileText,
+  Flag,
 } from "lucide-react";
-import type { EntryItem, AreaType, HorizonType, BlockItem, BlockType, AiContextData } from "@/types/database.types";
+import type { EntryItem, AreaType, HorizonType, BlockItem, BlockType, AiContextData, PriorityType } from "@/types/database.types";
 
 interface EntryDetailDrawerProps {
   entry: EntryItem | null;
@@ -37,9 +44,15 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
   const [title, setTitle] = useState(entry.title);
   const [area, setArea] = useState<AreaType>(entry.area);
   const [horizon, setHorizon] = useState<HorizonType>(entry.horizon);
+  const [dueDate, setDueDate] = useState<string>(
+    entry.due_date ? entry.due_date.split("T")[0] : ""
+  );
+  const [priority, setPriority] = useState<PriorityType>(entry.priority || "media");
   const [blocks, setBlocks] = useState<BlockItem[]>(entry.content || []);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Invocacion a Gemini para desglose estructurado
   const handleBreakdownAI = async () => {
@@ -111,6 +124,47 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
     setBlocks((prev) => [...prev, newBlock]);
   };
 
+  // Subir archivo a Supabase Storage
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingFile(true);
+    try {
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filePath = `${entry.id}/${Date.now()}_${sanitizedName}`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from("entry-attachments")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabaseClient.storage
+        .from("entry-attachments")
+        .getPublicUrl(filePath);
+
+      const isImage = file.type.startsWith("image/");
+      const newBlock: BlockItem = {
+        id: `block-${Date.now()}`,
+        type: "file",
+        content: publicUrl,
+        metadata: {
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          isImage,
+        },
+      };
+      setBlocks((prev) => [...prev, newBlock]);
+    } catch (err) {
+      console.error("Error al subir archivo a Supabase Storage:", err);
+    } finally {
+      setIsUploadingFile(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
   // Guardar todo en Supabase
   const handleSave = async () => {
     if (!title.trim()) return;
@@ -121,6 +175,8 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
         title: title.trim(),
         area,
         horizon,
+        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        priority,
         content: blocks,
       });
       onClose();
@@ -196,6 +252,39 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
               <option value="corto">Corto Plazo</option>
               <option value="mediano">Mediano Plazo</option>
               <option value="largo">Largo Plazo</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Selectores de Fecha Limite y Prioridad */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5 text-left">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-muted">
+              <Calendar className="w-3.5 h-3.5 text-text-muted" />
+              <span>Fecha Limite</span>
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai/60 cursor-pointer transition [color-scheme:dark]"
+            />
+          </div>
+
+          <div className="space-y-1.5 text-left">
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-text-muted">
+              <Flag className="w-3.5 h-3.5 text-text-muted" />
+              <span>Prioridad</span>
+            </label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as PriorityType)}
+              className="w-full bg-surface-subtle border border-border-subtle rounded-xl px-3 py-2 text-xs text-text-primary focus:outline-none focus:border-ai/60 cursor-pointer capitalize transition"
+            >
+              <option value="baja">Baja</option>
+              <option value="media">Media</option>
+              <option value="alta">Alta</option>
+              <option value="urgente">Urgente</option>
             </select>
           </div>
         </div>
@@ -314,6 +403,102 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
                   );
                 }
 
+                // Bloque tipo Archivo / Imagen
+                if (block.type === "file") {
+                  const isImg =
+                    block.metadata?.isImage ||
+                    block.content.match(/\.(jpeg|jpg|gif|png|webp|svg)($|\?)/i);
+                  const fileName = (block.metadata?.fileName as string) || "Archivo adjunto";
+
+                  return (
+                    <div
+                      key={block.id}
+                      className="group flex flex-col gap-2 bg-surface-subtle/70 border border-border-subtle p-3 rounded-xl relative"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          {isImg ? (
+                            <Paperclip className="w-3.5 h-3.5 text-ai shrink-0" />
+                          ) : (
+                            <FileText className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                          )}
+                          <span className="text-xs font-medium text-text-primary truncate">
+                            {fileName}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <a
+                            href={block.content}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 text-text-muted hover:text-text-primary transition"
+                            title="Abrir o descargar archivo"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBlock(block.id)}
+                            className="p-1 text-text-muted hover:text-gym transition cursor-pointer"
+                            title="Eliminar archivo"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {isImg && (
+                        <div className="relative rounded-lg overflow-hidden border border-white/5 bg-black/40 max-h-48 flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={block.content}
+                            alt={fileName}
+                            className="max-h-48 w-auto object-contain rounded-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Bloque tipo Enlace
+                if (block.type === "link") {
+                  return (
+                    <div
+                      key={block.id}
+                      className="group flex items-center gap-2.5 bg-surface-subtle/60 border border-border-subtle px-3 py-2 rounded-xl"
+                    >
+                      <LinkIcon className="w-4 h-4 text-sky-400 shrink-0" />
+                      <input
+                        type="url"
+                        value={block.content}
+                        onChange={(e) =>
+                          handleUpdateBlockContent(block.id, e.target.value)
+                        }
+                        placeholder="https://ejemplo.com..."
+                        className="w-full bg-transparent text-xs text-sky-300 focus:outline-none placeholder:text-text-muted/40 truncate"
+                      />
+                      {block.content && (
+                        <a
+                          href={block.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-text-muted hover:text-text-primary p-1 transition"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteBlock(block.id)}
+                        className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-gym transition p-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                }
+
                 // Bloque por defecto (Paragraph, Heading, Bullet, Code)
                 return (
                   <div
@@ -343,8 +528,8 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
             </div>
           )}
 
-          {/* Boton rapido para anadir bloques manualmente */}
-          <div className="flex items-center gap-2 pt-1">
+          {/* Botones rapidos para anadir bloques manualmente */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             <button
               type="button"
               onClick={() => handleAddBlock("todo")}
@@ -360,6 +545,35 @@ function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFor
             >
               <Plus className="w-3 h-3" />
               <span>+ Destacado</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddBlock("link")}
+              className="text-[11px] font-medium text-text-muted hover:text-text-primary bg-surface-subtle border border-border-subtle px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1"
+            >
+              <LinkIcon className="w-3 h-3" />
+              <span>+ Enlace</span>
+            </button>
+
+            {/* Input oculto y boton para subir archivo */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingFile}
+              className="text-[11px] font-medium text-text-muted hover:text-text-primary bg-surface-subtle border border-border-subtle px-2.5 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1 disabled:opacity-50"
+            >
+              {isUploadingFile ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Paperclip className="w-3 h-3" />
+              )}
+              <span>{isUploadingFile ? "Subiendo..." : "+ Archivo"}</span>
             </button>
           </div>
         </div>

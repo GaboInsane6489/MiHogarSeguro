@@ -10,7 +10,9 @@ export type AreaType = 'trabajo' | 'universidad' | 'gimnasio' | 'cashea' | 'pers
 
 export type HorizonType = 'hoy' | 'corto' | 'mediano' | 'largo';
 
-export type BlockType = 'heading' | 'paragraph' | 'todo' | 'bullet' | 'code' | 'callout';
+export type PriorityType = 'baja' | 'media' | 'alta' | 'urgente';
+
+export type BlockType = 'heading' | 'paragraph' | 'todo' | 'bullet' | 'code' | 'callout' | 'file' | 'link' | 'code_snippet';
 
 export type BlockItem = {
   id: string;
@@ -26,6 +28,7 @@ export type EntryItem = {
   content: BlockItem[];
   area: AreaType;
   horizon: HorizonType;
+  priority?: PriorityType;
   is_completed: boolean;
   metadata?: Record<string, unknown>;
   due_date?: string | null;
@@ -62,6 +65,7 @@ export type Database = {
           content?: BlockItem[];
           area?: AreaType;
           horizon?: HorizonType;
+          priority?: PriorityType;
           is_completed?: boolean;
           metadata?: Record<string, unknown>;
           due_date?: string | null;
@@ -75,6 +79,7 @@ export type Database = {
           content?: BlockItem[];
           area?: AreaType;
           horizon?: HorizonType;
+          priority?: PriorityType;
           is_completed?: boolean;
           metadata?: Record<string, unknown>;
           due_date?: string | null;
