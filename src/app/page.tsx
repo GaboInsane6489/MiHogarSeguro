@@ -390,11 +390,17 @@ export default function Home() {
   const taskCounts = useMemo(() => {
     const counts: Record<AreaType | "all", number> = {
       all: tasks.filter((t) => !t.is_completed).length,
-      trabajo: tasks.filter((t) => t.area === "trabajo" && !t.is_completed).length,
-      universidad: tasks.filter((t) => t.area === "universidad" && !t.is_completed).length,
-      gimnasio: tasks.filter((t) => t.area === "gimnasio" && !t.is_completed).length,
-      cashea: tasks.filter((t) => t.area === "cashea" && !t.is_completed).length,
-      personal: tasks.filter((t) => t.area === "personal" && !t.is_completed).length,
+      trabajo: tasks.filter((t) => t.area === "trabajo" && !t.is_completed)
+        .length,
+      universidad: tasks.filter(
+        (t) => t.area === "universidad" && !t.is_completed,
+      ).length,
+      gimnasio: tasks.filter((t) => t.area === "gimnasio" && !t.is_completed)
+        .length,
+      cashea: tasks.filter((t) => t.area === "cashea" && !t.is_completed)
+        .length,
+      personal: tasks.filter((t) => t.area === "personal" && !t.is_completed)
+        .length,
     };
     return counts;
   }, [tasks]);
@@ -422,18 +428,19 @@ export default function Home() {
 
   return (
     <div className="relative flex h-screen bg-[#090d16] overflow-hidden text-zinc-100 font-sans">
-      {/* Fondo Ambiental Personalizado de la App si existe banner_url */}
+      {/* Fondo de Pantalla Fijo Personalizado */}
       {profile?.banner_url && (
         <div
-          className="fixed inset-0 pointer-events-none z-0 transition-all duration-700 bg-cover bg-center"
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
           style={{
             backgroundImage: `url(${profile.banner_url})`,
-            opacity: 0.1,
-            filter: "blur(32px) saturate(1.3)",
-            transform: "scale(1.05)",
           }}
-        />
+        >
+          {/* Velo de contraste oscuro para legibilidad sin distorsionar la imagen */}
+          <div className="absolute inset-0 bg-black/45 backdrop-brightness-75" />
+        </div>
       )}
+
       {/* Sidebar lateral */}
       <Sidebar
         currentArea={currentArea}
@@ -452,10 +459,10 @@ export default function Home() {
       />
 
       {/* Viewport Principal Desacoplado con Contencion Centrada */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto w-full px-6 sm:px-10 py-8 min-h-screen flex flex-col justify-start">
+      <main className="relative z-10 flex-1 overflow-y-auto">
+        <div className="max-w-5xl mx-auto w-full px-6 sm:px-10 py-8 min-h-screen flex flex-col justify-start space-y-6">
           {/* Header Superior y Metricas */}
-          <header className="space-y-4 mb-6 pb-5 border-b border-white/10">
+          <header className="p-5 rounded-2xl bg-[#0d1117]/90 backdrop-blur-xl border border-white/10 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
@@ -545,8 +552,8 @@ export default function Home() {
             </div>
           </header>
 
-          {/* Formulario de Captura Rapida (mb-8) */}
-          <section className="w-full bg-[#161b22] border border-white/10 rounded-xl p-3 shadow-lg focus-within:border-indigo-500/60 transition-all mb-8">
+          {/* Formulario de Captura Rapida */}
+          <section className="w-full bg-[#0d1117]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-xl focus-within:border-indigo-500/60 transition-all">
             <AiTaskInput
               value={inputTitle}
               onChange={setInputTitle}
@@ -646,7 +653,9 @@ export default function Home() {
                     ? task.content.filter((b) => b.type === "todo").length
                     : 0;
                   const completedTodos = task.content
-                    ? task.content.filter((b) => b.type === "todo" && b.metadata?.is_completed).length
+                    ? task.content.filter(
+                        (b) => b.type === "todo" && b.metadata?.is_completed,
+                      ).length
                     : 0;
 
                   const areaBorderAccent =
@@ -663,7 +672,7 @@ export default function Home() {
                   return (
                     <div
                       key={task.id}
-                      className={`flex items-center justify-between p-3.5 rounded-xl bg-[#161b22]/70 hover:bg-[#161b22] border border-white/5 hover:border-white/20 border-l-2 ${areaBorderAccent} transition-all hover:translate-x-0.5 group shadow-sm`}
+                      className={`flex items-center justify-between p-4 rounded-xl bg-[#0d1117]/95 hover:bg-[#161b22] border border-white/10 hover:border-white/25 border-l-4 ${areaBorderAccent} transition-all hover:translate-x-0.5 group shadow-lg`}
                     >
                       <div
                         onClick={() => setSelectedEntry(task)}
@@ -806,8 +815,8 @@ export default function Home() {
                           </span>
                         )}
 
-                        {/* Botones al pasar el cursor */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Botones de Accion */}
+                        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
                             onClick={() => setSelectedEntry(task)}
