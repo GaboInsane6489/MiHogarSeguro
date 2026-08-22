@@ -14,10 +14,12 @@ import {
   Briefcase,
   Target,
   FileText,
+  Trash2,
+  Palette,
 } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/imageOptimizer";
-import type { UserProfile, AiContextData } from "@/types/database.types";
+import type { UserProfile } from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
 
 interface ProfileSettingsModalProps {
@@ -29,6 +31,40 @@ interface ProfileSettingsModalProps {
 }
 
 type TabType = "general" | "ai_context";
+
+interface WallpaperPreset {
+  id: string;
+  name: string;
+  url: string;
+  previewBg: string;
+}
+
+const WALLPAPER_PRESETS: WallpaperPreset[] = [
+  {
+    id: "obsidian-mesh",
+    name: "Obsidian Mesh",
+    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop",
+    previewBg: "from-zinc-900 via-zinc-950 to-black",
+  },
+  {
+    id: "cyber-indigo",
+    name: "Cyber Indigo",
+    url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1920&auto=format&fit=crop",
+    previewBg: "from-indigo-950 via-slate-900 to-black",
+  },
+  {
+    id: "emerald-dark",
+    name: "Emerald Aurora",
+    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1920&auto=format&fit=crop",
+    previewBg: "from-emerald-950 via-slate-900 to-black",
+  },
+  {
+    id: "titanium-carbon",
+    name: "Deep Space",
+    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1920&auto=format&fit=crop",
+    previewBg: "from-purple-950 via-zinc-900 to-black",
+  },
+];
 
 export function ProfileSettingsModal({
   isOpen,
@@ -45,7 +81,9 @@ export function ProfileSettingsModal({
   const [bannerUrl, setBannerUrl] = useState(profile?.banner_url || "");
 
   // AI Context State
-  const [profession, setProfession] = useState(profile?.ai_context?.profession || "");
+  const [profession, setProfession] = useState(
+    profile?.ai_context?.profession || "",
+  );
   const [goals, setGoals] = useState(profile?.ai_context?.goals || "");
   const [customInstructions, setCustomInstructions] = useState(
     profile?.ai_context?.custom_instructions || "",
@@ -65,7 +103,7 @@ export function ProfileSettingsModal({
 
   if (!isOpen) return null;
 
-  // Subir y optimizar Avatar
+  // Subir y optimizar Avatar (400x400 WebP)
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -74,7 +112,6 @@ export function ProfileSettingsModal({
     setFeedback(null);
 
     try {
-      // Optimizar en el cliente a WebP ligero 400x400
       const optimized = await optimizeImage(file, {
         maxWidth: 400,
         maxHeight: 400,
@@ -82,6 +119,7 @@ export function ProfileSettingsModal({
         format: "image/webp",
       });
 
+      const sizeKb = Math.round(optimized.size / 1024);
       const fileExt = "webp";
       const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
 
@@ -101,17 +139,18 @@ export function ProfileSettingsModal({
       setAvatarUrl(data.publicUrl);
       setFeedback({
         type: "success",
-        message: "Foto de perfil optimizada y cargada. Guarda para aplicar.",
+        message: `Foto de perfil optimizada (${sizeKb} KB WebP). Guarda para aplicar los cambios.`,
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al subir avatar.";
+      const msg =
+        err instanceof Error ? err.message : "Error al subir foto de perfil.";
       setFeedback({ type: "error", message: msg });
     } finally {
       setUploadingAvatar(false);
     }
   };
 
-  // Subir y optimizar Banner
+  // Subir y optimizar Wallpaper / Banner (1920x1080 Full HD WebP)
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -120,14 +159,14 @@ export function ProfileSettingsModal({
     setFeedback(null);
 
     try {
-      // Optimizar en el cliente a WebP panorámico 1200x450
       const optimized = await optimizeImage(file, {
-        maxWidth: 1200,
-        maxHeight: 450,
+        maxWidth: 1920,
+        maxHeight: 1080,
         quality: 0.85,
         format: "image/webp",
       });
 
+      const sizeKb = Math.round(optimized.size / 1024);
       const fileExt = "webp";
       const filePath = `banners/${user.id}-${Date.now()}.${fileExt}`;
 
@@ -147,14 +186,46 @@ export function ProfileSettingsModal({
       setBannerUrl(data.publicUrl);
       setFeedback({
         type: "success",
-        message: "Banner de portada optimizado y cargado. Guarda para aplicar.",
+        message: `Fondo de pantalla optimizado a Full HD (${sizeKb} KB WebP). Guarda para aplicar.`,
       });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al subir banner.";
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Error al subir fondo de pantalla.";
       setFeedback({ type: "error", message: msg });
     } finally {
       setUploadingBanner(false);
     }
+  };
+
+  // Quitar Fondo / Restablecer
+  const handleRemoveBanner = () => {
+    setBannerUrl("");
+    setFeedback({
+      type: "success",
+      message:
+        "Fondo removido. Se usará el tema oscuro nativo. Guarda para aplicar.",
+    });
+  };
+
+  // Quitar Avatar
+  const handleRemoveAvatar = () => {
+    setAvatarUrl("");
+    setFeedback({
+      type: "success",
+      message:
+        "Foto de perfil removida. Se usarán tus iniciales. Guarda para aplicar.",
+    });
+  };
+
+  // Seleccionar Preset de Fondo
+  const handleSelectPreset = (presetUrl: string, presetName: string) => {
+    setBannerUrl(presetUrl);
+    setFeedback({
+      type: "success",
+      message: `Fondo predeterminado "${presetName}" seleccionado. Guarda para aplicar.`,
+    });
   };
 
   // Guardar Cambios en Supabase
@@ -166,24 +237,24 @@ export function ProfileSettingsModal({
     setFeedback(null);
 
     try {
-      const ai_context: AiContextData = {
-        profession: profession.trim(),
-        goals: goals.trim(),
-        custom_instructions: customInstructions.trim(),
-      };
-
-      const updatedProfilePayload = {
-        id: user.id,
-        full_name: fullName.trim() || null,
+      const updatedProfilePayload: Partial<UserProfile> = {
+        full_name: fullName.trim(),
         avatar_url: avatarUrl.trim() || null,
         banner_url: bannerUrl.trim() || null,
-        ai_context,
+        ai_context: {
+          profession: profession.trim(),
+          goals: goals.trim(),
+          custom_instructions: customInstructions.trim(),
+        },
         updated_at: new Date().toISOString(),
       };
 
       const { data, error } = await supabaseClient
         .from("profiles")
-        .upsert(updatedProfilePayload)
+        .upsert({
+          id: user.id,
+          ...updatedProfilePayload,
+        })
         .select()
         .single();
 
@@ -193,14 +264,15 @@ export function ProfileSettingsModal({
         onProfileUpdated(data as UserProfile);
         setFeedback({
           type: "success",
-          message: "Perfil y Contexto de IA actualizados correctamente.",
+          message: "¡Perfil y fondo actualizados exitosamente!",
         });
         setTimeout(() => {
           onClose();
         }, 800);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al guardar el perfil.";
+      const msg =
+        err instanceof Error ? err.message : "Error al guardar el perfil.";
       setFeedback({ type: "error", message: msg });
     } finally {
       setIsSaving(false);
@@ -212,280 +284,344 @@ export function ProfileSettingsModal({
     .toUpperCase();
 
   return (
-    <>
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      {/* Backdrop con desenfoque */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 transition-opacity"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
       />
 
-      {/* Modal Central */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div className="relative w-full max-w-2xl bg-[#0d1117] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[90vh]">
-          {/* Header con Banner de Portada */}
-          <div className="relative h-32 sm:h-36 w-full bg-gradient-to-r from-indigo-950 via-slate-900 to-zinc-950 border-b border-white/10 overflow-hidden shrink-0">
-            {bannerUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={bannerUrl}
-                alt="Banner de perfil"
-                className="w-full h-full object-cover opacity-80"
-              />
-            ) : (
-              <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-zinc-900/20 to-transparent" />
+      {/* Modal Centralizado */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-2xl bg-[#0d1117]/98 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[92vh] text-zinc-100"
+      >
+        {/* Header con Banner / Fondo de Portada */}
+        <div className="relative h-36 sm:h-44 w-full bg-gradient-to-r from-indigo-950 via-slate-900 to-zinc-950 border-b border-white/10 overflow-hidden shrink-0">
+          {bannerUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={bannerUrl}
+              alt="Fondo de pantalla del workspace"
+              className="w-full h-full object-cover opacity-85 transition-opacity"
+            />
+          ) : (
+            <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-zinc-900/40 to-transparent flex items-center justify-center">
+              <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
+                Fondo Oscuro Nativo
+              </span>
+            </div>
+          )}
+
+          {/* Botones de Acción de Portada */}
+          <div className="absolute top-3 right-12 flex items-center gap-2">
+            {bannerUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveBanner}
+                title="Quitar fondo y volver al tema oscuro nativo"
+                className="p-2 rounded-xl bg-black/70 hover:bg-rose-500/20 hover:text-rose-300 text-zinc-300 border border-white/10 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Quitar Fondo</span>
+              </button>
             )}
 
-            {/* Botón para cambiar Banner */}
             <button
               type="button"
               onClick={() => bannerInputRef.current?.click()}
               disabled={uploadingBanner}
-              title="Cambiar banner de portada"
-              className="absolute top-3 right-12 p-2 rounded-lg bg-black/60 hover:bg-black/80 text-zinc-300 hover:text-white border border-white/10 backdrop-blur-md text-xs font-medium transition cursor-pointer flex items-center gap-1.5"
+              title="Subir fondo de pantalla personalizado (Full HD WebP)"
+              className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-zinc-200 hover:text-white border border-white/15 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md"
             >
               {uploadingBanner ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <ImageIcon className="w-3.5 h-3.5" />
               )}
-              <span className="hidden sm:inline">Cambiar Portada</span>
+              <span>{bannerUrl ? "Cambiar Fondo" : "Subir Fondo"}</span>
             </button>
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleBannerUpload}
-            />
+          </div>
 
-            {/* Botón Cerrar Modal */}
+          <input
+            ref={bannerInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBannerUpload}
+          />
+
+          {/* Botón Cerrar */}
+          <button
+            type="button"
+            onClick={onClose}
+            title="Cerrar modal"
+            className="absolute top-3 right-3 p-2 rounded-xl bg-black/70 hover:bg-black/90 text-zinc-400 hover:text-white border border-white/10 backdrop-blur-md transition cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          {/* Avatar Superpuesto */}
+          <div className="absolute -bottom-6 left-6 flex items-end gap-3">
+            <div className="relative group">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-zinc-900 border-2 border-indigo-500/60 shadow-2xl overflow-hidden flex items-center justify-center">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt="Foto de perfil"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xl sm:text-2xl font-bold text-indigo-400 font-mono">
+                    {userInitials}
+                  </span>
+                )}
+
+                {/* Overlay para subir Avatar */}
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  title="Cambiar foto de perfil"
+                  className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1 cursor-pointer"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Camera className="w-4 h-4" />
+                      <span>Cambiar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
+            </div>
+
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                title="Quitar foto y usar iniciales"
+                className="mb-1 p-1.5 rounded-lg bg-zinc-900/90 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 border border-white/10 transition cursor-pointer text-[10px] font-mono"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Navegación por Pestañas */}
+        <div className="pt-8 px-6 border-b border-white/10 flex items-center gap-6 bg-[#161b22]/40">
+          <button
+            type="button"
+            onClick={() => setActiveTab("general")}
+            className={`pb-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition cursor-pointer ${
+              activeTab === "general"
+                ? "border-indigo-500 text-white"
+                : "border-transparent text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <UserIcon className="w-4 h-4" />
+            <span>General & Fondos</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("ai_context")}
+            className={`pb-3 text-xs font-semibold flex items-center gap-2 border-b-2 transition cursor-pointer ${
+              activeTab === "ai_context"
+                ? "border-indigo-500 text-white"
+                : "border-transparent text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <span>Contexto de IA</span>
+          </button>
+        </div>
+
+        {/* Feedback Alert */}
+        {feedback && (
+          <div
+            className={`mx-6 mt-4 p-3 rounded-xl flex items-center gap-2.5 text-xs font-medium ${
+              feedback.type === "success"
+                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                : "bg-rose-500/10 border border-rose-500/20 text-rose-400"
+            }`}
+          >
+            {feedback.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            )}
+            <span>{feedback.message}</span>
+          </div>
+        )}
+
+        {/* Form Content */}
+        <form
+          onSubmit={handleSave}
+          className="flex-1 overflow-y-auto p-6 space-y-6"
+        >
+          {activeTab === "general" ? (
+            <div className="space-y-6">
+              {/* Nombre de Usuario */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-300 block">
+                  Nombre Completo / Apodo
+                </label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Ej: Gabriel Martínez"
+                  className="w-full h-11 px-4 text-xs sm:text-sm bg-zinc-900/90 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                />
+              </div>
+
+              {/* Email (Solo lectura) */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-400 block">
+                  Correo Electrónico (Cuenta Supabase)
+                </label>
+                <input
+                  type="email"
+                  value={user?.email || ""}
+                  disabled
+                  className="w-full h-11 px-4 text-xs sm:text-sm bg-zinc-950/80 border border-white/5 rounded-xl text-zinc-500 cursor-not-allowed font-mono"
+                />
+              </div>
+
+              {/* Galería de Fondos Prediseñados */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-indigo-400" />
+                  <label className="text-xs font-semibold text-zinc-200">
+                    Fondos de Pantalla Prediseñados (Presets Dark)
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {WALLPAPER_PRESETS.map((preset) => {
+                    const isSelected = bannerUrl === preset.url;
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() =>
+                          handleSelectPreset(preset.url, preset.name)
+                        }
+                        className={`group relative h-20 rounded-xl border overflow-hidden p-2 flex flex-col justify-end transition cursor-pointer ${
+                          isSelected
+                            ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-lg"
+                            : "border-white/10 hover:border-white/30"
+                        }`}
+                      >
+                        <div
+                          className="absolute inset-0 bg-cover bg-center transition-transform group-hover:scale-105"
+                          style={{ backgroundImage: `url(${preset.url})` }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                        <span className="relative z-10 text-[11px] font-bold text-white truncate">
+                          {preset.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 leading-relaxed">
+                Este contexto se inyecta dinámicamente a{" "}
+                <strong>Google Gemini</strong> para que sus respuestas y
+                desgloses de tareas se adapten a tu perfil profesional.
+              </div>
+
+              {/* Profesión */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Profesión / Rol Actual</span>
+                </label>
+                <input
+                  type="text"
+                  value={profession}
+                  onChange={(e) => setProfession(e.target.value)}
+                  placeholder="Ej: Desarrollador Frontend Senior & Estudiante de Ingeniería"
+                  className="w-full h-11 px-4 text-xs sm:text-sm bg-zinc-900/90 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                />
+              </div>
+
+              {/* Metas Principales */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <Target className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Metas Principales & Enfoque Actual</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={goals}
+                  onChange={(e) => setGoals(e.target.value)}
+                  placeholder="Ej: Dominar Next.js 16, mantener 4 días de entrenamiento semanales y graduarme con honores."
+                  className="w-full p-3 text-xs sm:text-sm bg-zinc-900/90 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition resize-none"
+                />
+              </div>
+
+              {/* Instrucciones Personalizadas */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Directivas de Estilo para la IA</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  placeholder="Ej: Respuestas directas y ejecutivas. Sin explicaciones obvias, código estructurado en TypeScript."
+                  className="w-full p-3 text-xs sm:text-sm bg-zinc-900/90 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition resize-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Footer de Acciones */}
+          <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="absolute top-3 right-3 p-2 rounded-lg bg-black/60 hover:bg-black/80 text-zinc-400 hover:text-white border border-white/10 backdrop-blur-md transition cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              Cancelar
             </button>
-
-            {/* Avatar Superpuesto */}
-            <div className="absolute -bottom-6 left-6 flex items-end gap-4">
-              <div className="relative group">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-zinc-900 border-2 border-indigo-500/50 shadow-xl overflow-hidden flex items-center justify-center">
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar de usuario"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xl sm:text-2xl font-bold text-indigo-400 font-mono">
-                      {userInitials}
-                    </span>
-                  )}
-
-                  {/* Overlay para subir Avatar */}
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={uploadingAvatar}
-                    title="Cambiar foto de perfil"
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1 cursor-pointer"
-                  >
-                    {uploadingAvatar ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Camera className="w-4 h-4" />
-                        <span>Cambiar</span>
-                      </>
-                    )}
-                  </button>
-                  <input
-                    ref={avatarInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                  />
-                </div>
-              </div>
-            </div>
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-lg transition flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
+            </button>
           </div>
-
-          {/* Navegación por Pestañas */}
-          <div className="pt-8 px-6 border-b border-white/10 bg-[#161b22]/50 flex items-center justify-between shrink-0">
-            <div className="flex gap-4">
-              <button
-                type="button"
-                onClick={() => setActiveTab("general")}
-                className={`pb-3 text-xs font-semibold border-b-2 transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "general"
-                    ? "border-indigo-500 text-white"
-                    : "border-transparent text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                <UserIcon className="w-3.5 h-3.5" />
-                <span>Perfil General</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab("ai_context")}
-                className={`pb-3 text-xs font-semibold border-b-2 transition flex items-center gap-2 cursor-pointer ${
-                  activeTab === "ai_context"
-                    ? "border-indigo-500 text-white"
-                    : "border-transparent text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Contexto de IA & Cerebro</span>
-              </button>
-            </div>
-
-            <span className="text-[11px] font-mono text-zinc-500 hidden sm:inline pb-3">
-              {user?.email}
-            </span>
-          </div>
-
-          {/* Formulario Principal con Scroll */}
-          <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-5">
-            {feedback && (
-              <div
-                className={`p-3 rounded-xl border text-xs flex items-center gap-2.5 ${
-                  feedback.type === "success"
-                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                    : "bg-rose-500/10 border-rose-500/30 text-rose-300"
-                }`}
-              >
-                {feedback.type === "success" ? (
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-                )}
-                <span>{feedback.message}</span>
-              </div>
-            )}
-
-            {activeTab === "general" ? (
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-zinc-300">
-                    Nombre Completo o Alias
-                  </label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Ej: Gabriel González"
-                    className="w-full h-11 px-3.5 bg-zinc-900 border border-white/10 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                  />
-                  <p className="text-[11px] text-zinc-500">
-                    Este nombre será utilizado por el Copiloto AI para dirigirse a ti.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-zinc-900/60 border border-white/5 space-y-2">
-                  <span className="text-xs font-semibold text-zinc-300 block">
-                    Optimización Automática de Imágenes
-                  </span>
-                  <p className="text-[11px] text-zinc-400 leading-relaxed">
-                    Las fotos de perfil y portadas se comprimen automáticamente en tu navegador al formato WebP de alto rendimiento antes de subirse a la nube, garantizando tiempos de carga instantáneos.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-indigo-400" />
-                    <span className="text-xs font-semibold text-indigo-300">
-                      Personalización Profunda del Copiloto
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-zinc-300 leading-relaxed">
-                    La IA adaptará automáticamente su tono, recomendaciones y desgloses de subtareas según tu contexto personal y profesional.
-                  </p>
-                </div>
-
-                {/* Profesión / Rol */}
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                    <Briefcase className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Profesión / Rol Actual</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    placeholder="Ej: Desarrollador Full-Stack / Estudiante de Ingeniería / Atleta"
-                    className="w-full h-11 px-3.5 bg-zinc-900 border border-white/10 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                  />
-                </div>
-
-                {/* Objetivos y Metas */}
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                    <Target className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Objetivos Principales del Trimestre / Año</span>
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={goals}
-                    onChange={(e) => setGoals(e.target.value)}
-                    placeholder="Ej: Lanzar aplicación SaaS en producción, aprobar cálculo con 18+, aumentar press banca a 100kg..."
-                    className="w-full p-3 bg-zinc-900 border border-white/10 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition resize-none"
-                  />
-                </div>
-
-                {/* Directivas de Estilo */}
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                    <FileText className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>Directivas de Estilo e Instrucciones Personalizadas</span>
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={customInstructions}
-                    onChange={(e) => setCustomInstructions(e.target.value)}
-                    placeholder="Ej: Responde siempre directo al grano con pasos accionables. Prioriza código limpio en TypeScript. Sin explicaciones obvias..."
-                    className="w-full p-3 bg-zinc-900 border border-white/10 rounded-xl text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition resize-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Footer de Acciones */}
-            <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                className="h-10 px-4 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="h-10 px-5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Guardando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span>Guardar Ajustes</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+        </form>
       </div>
-    </>
+    </div>
   );
 }
