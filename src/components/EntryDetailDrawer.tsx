@@ -12,12 +12,13 @@ import {
   Circle,
   Info,
 } from "lucide-react";
-import type { EntryItem, AreaType, HorizonType, BlockItem, BlockType } from "@/types/database.types";
+import type { EntryItem, AreaType, HorizonType, BlockItem, BlockType, AiContextData } from "@/types/database.types";
 
 interface EntryDetailDrawerProps {
   entry: EntryItem | null;
   isOpen: boolean;
   onClose: () => void;
+  aiContext?: AiContextData;
   onUpdate: (
     updatedEntry: Partial<EntryItem> & { id: string },
   ) => Promise<void>;
@@ -26,12 +27,13 @@ interface EntryDetailDrawerProps {
 interface EntryDetailFormProps {
   entry: EntryItem;
   onClose: () => void;
+  aiContext?: AiContextData;
   onUpdate: (
     updatedEntry: Partial<EntryItem> & { id: string },
   ) => Promise<void>;
 }
 
-function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
+function EntryDetailForm({ entry, onClose, aiContext, onUpdate }: EntryDetailFormProps) {
   const [title, setTitle] = useState(entry.title);
   const [area, setArea] = useState<AreaType>(entry.area);
   const [horizon, setHorizon] = useState<HorizonType>(entry.horizon);
@@ -52,6 +54,7 @@ function EntryDetailForm({ entry, onClose, onUpdate }: EntryDetailFormProps) {
           input: title.trim(),
           area,
           horizon,
+          aiContext,
         }),
       });
 
@@ -393,6 +396,7 @@ export function EntryDetailDrawer({
   entry,
   isOpen,
   onClose,
+  aiContext,
   onUpdate,
 }: EntryDetailDrawerProps) {
   if (!isOpen || !entry) return null;
@@ -410,6 +414,7 @@ export function EntryDetailDrawer({
         key={entry.id}
         entry={entry}
         onClose={onClose}
+        aiContext={aiContext}
         onUpdate={onUpdate}
       />
     </>

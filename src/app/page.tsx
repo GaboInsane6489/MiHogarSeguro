@@ -502,6 +502,7 @@ export default function Home() {
               value={inputTitle}
               onChange={setInputTitle}
               category={currentArea === "all" ? inputArea : currentArea}
+              aiContext={profile?.ai_context}
             />
 
             <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
@@ -701,6 +702,7 @@ export default function Home() {
         entry={selectedEntry}
         isOpen={!!selectedEntry}
         onClose={() => setSelectedEntry(null)}
+        aiContext={profile?.ai_context}
         onUpdate={handleUpdateEntry}
       />
     </div>

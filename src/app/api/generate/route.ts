@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { NextResponse } from "next/server";
-import type { AreaType, HorizonType, BlockItem } from "@/types/database.types";
+import type { AreaType, HorizonType, BlockItem, AiContextData } from "@/types/database.types";
 
 interface GeneratePayload {
   mode?: "suggest" | "breakdown";
@@ -8,7 +8,30 @@ interface GeneratePayload {
   prompt?: string; // Compatibilidad hacia atrás
   area?: AreaType;
   horizon?: HorizonType;
+  aiContext?: AiContextData;
 }
+
+const DOMAIN_INSTRUCTIONS: Record<AreaType, string> = {
+  trabajo: `Actúa como un Staff Technical Project Manager y Arquitecto de Software.
+- Desglosa la tarea en entregables técnicos concretos, dependencias críticas, estimación y criterios de aceptación claros.
+- Prioriza bloques tipo 'todo' para acciones directas, 'callout' para riesgos o dependencias de arquitectura, y 'code' para comandos o snippets.`,
+
+  universidad: `Actúa como un Asesor Académico y Metodológico de Alto Rendimiento.
+- Desglosa el trabajo en etapas de investigación, lectura crítica, recolección de fuentes bibliográficas y redacción por entregas.
+- Utiliza bloques 'heading' para secciones temáticas, 'todo' para entregas parciales y 'callout' para fuentes y citas clave.`,
+
+  gimnasio: `Actúa como un Entrenador de Fuerza y Acondicionamiento Físico (CSCS).
+- Estructura la sesión en: calentamiento articular, series de aproximación, series efectivas (indicando repeticiones y RPE/RIR) y recomendaciones de recuperación.
+- Emplea bloques 'todo' para cada ejercicio y 'callout' para advertencias de postura, técnica e hidratación.`,
+
+  cashea: `Actúa como un Asesor Financiero Personal y Gestor de Flujo de Caja.
+- Estructura la compra/gasto en: cálculo de pago inicial, calendario de cuotas quincenales, fechas de corte y validación de liquidez.
+- Utiliza bloques 'callout' para montos totales/alertas de saldo y 'todo' para fechas de pago programadas.`,
+
+  personal: `Actúa como un Estratega de Productividad y Second Brain.
+- Convierte ideas abstractas en micro-hábitos accionables, pasos de bajo rozamiento cognitivo y reflexiones de mejora continua.
+- Emplea bloques 'todo' simples y 'callout' para ideas inspiradoras o recordatorios.`
+};
 
 const FALLBACK_MODELS = [
   "gemini-3.6-flash",
@@ -62,14 +85,25 @@ export async function POST(request: Request) {
     const area = body.area || "personal";
     const horizon = body.horizon || "hoy";
     const input = body.input || body.prompt || "";
+    const aiContext = body.aiContext;
+
+    const domainInstruction = DOMAIN_INSTRUCTIONS[area] || DOMAIN_INSTRUCTIONS.personal;
+
+    let userContextString = "";
+    if (aiContext && (aiContext.profession || aiContext.goals || aiContext.custom_instructions)) {
+      userContextString = `\n\nCONTEXTO Y PERFIL DEL USUARIO:
+- Profesión/Rol: ${aiContext.profession || "No especificado"}
+- Objetivos Actuales: ${aiContext.goals || "No especificado"}
+- Directivas de Respuesta: ${aiContext.custom_instructions || "Ninguna"}`;
+    }
 
     const ai = new GoogleGenAI({ apiKey });
 
     // MODO 1: Sugerencia de título conciso
     if (mode === "suggest") {
       const userPrompt = input.trim()
-        ? `Genera un título corto, accionable e inspirador relacionado con "${input}" para el área de ${area} (horizonte temporal: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`
-        : `Genera una única tarea diaria corta, concisa y orientada a la acción para la categoría ${area} (horizonte: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`;
+        ? `Rol y Especialidad: ${domainInstruction}${userContextString}\n\nGenera un título corto, accionable y de alto impacto relacionado con "${input}" para el área de ${area} (horizonte temporal: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`
+        : `Rol y Especialidad: ${domainInstruction}${userContextString}\n\nGenera una única tarea diaria corta, concisa y orientada a la acción para la categoría ${area} (horizonte: ${horizon}). Máximo 8 palabras, sin comillas ni puntos.`;
 
       const response = await generateWithFallback(ai, {
         contents: userPrompt,
@@ -81,15 +115,13 @@ export async function POST(request: Request) {
 
     // MODO 2: Desglose estructurado en bloques (BlockItem[])
     if (mode === "breakdown") {
-      const systemInstruction = `Eres el asistente de organización personal de un Second Brain.
-      Tu objetivo es desglosar la idea del usuario en bloques de contenido accionables y estructurados según el área:
-      - 'trabajo': tareas ejecutables (todo), llamadas de atención (callout), detalles técnicos (code/paragraph).
-      - 'universidad': conceptos clave (heading/paragraph), lecturas y entregas (todo).
-      - 'gimnasio': ejercicios con series/repeticiones (bullet/todo), consejos de descanso (callout).
-      - 'cashea': desglose de cuotas, montos y fechas de pago (bullet/todo/callout).
-      - 'personal': reflexiones, hábitos y pasos (todo/paragraph).`;
+      const systemInstruction = `Eres el asistente de organización inteligente de un Second Brain de alto rendimiento.
+${domainInstruction}
+${userContextString}
 
-      const userPrompt = `Desglosa la siguiente entrada: "${input}". Área: ${area}. Horizonte temporal: ${horizon}.`;
+Tu objetivo es estructurar la entrada en una lista de bloques heterogéneos accionables ('heading', 'paragraph', 'todo', 'bullet', 'code', 'callout') que permitan una ejecución inmediata.`;
+
+      const userPrompt = `Desglosa la siguiente entrada: "${input}". Área de enfoque: ${area}. Horizonte temporal: ${horizon}.`;
 
       const response = await generateWithFallback(ai, {
         contents: userPrompt,

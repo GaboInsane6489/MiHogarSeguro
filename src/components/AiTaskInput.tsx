@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { Sparkles, Loader2, Wand2 } from "lucide-react";
+import type { AiContextData } from "@/types/database.types";
 
 interface AiTaskInputProps {
   value: string;
   onChange: (value: string) => void;
   category: string;
+  aiContext?: AiContextData;
 }
 
-export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
+export function AiTaskInput({ value, onChange, category, aiContext }: AiTaskInputProps) {
   const [loadingAI, setLoadingAI] = useState(false);
 
   const handleGenerateAI = async () => {
@@ -22,6 +24,7 @@ export function AiTaskInput({ value, onChange, category }: AiTaskInputProps) {
           mode: "suggest",
           input: value.trim(),
           area: category,
+          aiContext,
         }),
       });
 
