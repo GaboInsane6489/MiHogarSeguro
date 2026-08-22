@@ -16,8 +16,10 @@ import {
   Milestone,
   LogOut,
   LogIn,
+  Settings,
 } from "lucide-react";
-import type { AreaType, HorizonType } from "@/types/database.types";
+import { BrandLogo } from "@/components/BrandLogo";
+import type { AreaType, HorizonType, UserProfile } from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
 
 interface SidebarProps {
@@ -28,7 +30,9 @@ interface SidebarProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   user?: User | null;
+  profile?: UserProfile | null;
   onOpenAuth?: () => void;
+  onOpenProfile?: () => void;
   onLogout?: () => Promise<void>;
 }
 
@@ -107,12 +111,13 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
   user,
+  profile,
   onOpenAuth,
+  onOpenProfile,
   onLogout,
 }: SidebarProps) {
-  const userInitials = user?.email
-    ? user.email.slice(0, 2).toUpperCase()
-    : "SB";
+  const displayName = profile?.full_name?.trim() || user?.email?.split("@")[0] || "Usuario";
+  const userInitials = (displayName || "SB").slice(0, 2).toUpperCase();
 
   return (
     <aside
@@ -125,7 +130,7 @@ export function Sidebar({
         {!isCollapsed && (
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0">
-              <span className="text-indigo-400 font-bold text-xs tracking-wider">SB</span>
+              <BrandLogo className="w-5 h-5 text-indigo-400" />
             </div>
             <div className="flex flex-col truncate">
               <span className="text-xs font-bold text-zinc-100 tracking-tight truncate">
@@ -237,7 +242,9 @@ export function Sidebar({
       <div className="p-3 pt-3 border-t border-white/5 space-y-2">
         {user ? (
           <div
-            className={`flex items-center gap-2 p-2 rounded-xl bg-white/[0.03] border border-white/5 ${
+            onClick={onOpenProfile}
+            title="Ajustes de Perfil & Contexto de IA"
+            className={`group flex items-center gap-2 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition cursor-pointer ${
               isCollapsed ? "justify-center" : "justify-between"
             }`}
           >
@@ -249,8 +256,8 @@ export function Sidebar({
               </div>
               {!isCollapsed && (
                 <div className="flex flex-col truncate">
-                  <span className="text-xs font-medium text-zinc-200 truncate">
-                    {user.email?.split("@")[0]}
+                  <span className="text-xs font-semibold text-zinc-200 truncate group-hover:text-white">
+                    {displayName}
                   </span>
                   <span className="text-[9px] text-zinc-500 truncate">
                     {user.email}
@@ -259,15 +266,33 @@ export function Sidebar({
               )}
             </div>
 
-            {!isCollapsed && onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                title="Cerrar sesion"
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+            {!isCollapsed && (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenProfile?.();
+                  }}
+                  title="Configurar perfil"
+                  className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+                {onLogout && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLogout();
+                    }}
+                    title="Cerrar sesion"
+                    className="p-1 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         ) : (

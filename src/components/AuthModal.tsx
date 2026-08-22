@@ -6,11 +6,11 @@ import {
   X,
   Mail,
   Lock,
-  KeyRound,
   Loader2,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -99,7 +99,7 @@ export function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
         <div className="flex items-center justify-between pb-4 mb-5 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-indigo-600/15 border border-indigo-500/30 flex items-center justify-center">
-              <KeyRound className="w-4 h-4 text-indigo-400" />
+              <BrandLogo className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white tracking-tight">

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { supabaseClient } from "@/lib/supabase";
 import { Sidebar } from "@/components/Sidebar";
 import { AiTaskInput } from "@/components/AiTaskInput";
 import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
 import { AuthModal } from "@/components/AuthModal";
-import type { EntryItem, AreaType, HorizonType } from "@/types/database.types";
+import { ProfileSettingsDrawer } from "@/components/ProfileSettingsDrawer";
+import type { EntryItem, AreaType, HorizonType, UserProfile } from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
 import {
   Briefcase,
@@ -26,6 +28,7 @@ import {
   Sparkles,
   Edit3,
   Plus,
+  Loader2,
 } from "lucide-react";
 
 type Filter = "all" | "pending" | "completed";
@@ -95,14 +98,18 @@ const HORIZON_LABELS: Record<
 };
 
 export default function Home() {
+  const router = useRouter();
   const [tasks, setTasks] = useState<EntryItem[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [creating, setCreating] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<EntryItem | null>(null);
 
-  // Estado de Autenticacion
+  // Estado de Autenticacion y Auth Gate
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
 
   // Filtros de navegacion
   const [currentArea, setCurrentArea] = useState<AreaType | "all">("all");
@@ -115,23 +122,70 @@ export default function Home() {
   const [inputArea, setInputArea] = useState<AreaType>("personal");
   const [inputHorizon, setInputHorizon] = useState<HorizonType>("hoy");
 
-  // Escuchar cambios de Auth en Supabase
+  // Auth Gate: Verificar sesion activa y redirigir si no existe
   useEffect(() => {
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+    let isMounted = true;
+
+    async function checkAuthSession() {
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!isMounted) return;
+
+      if (!session?.user) {
+        setUser(null);
+        setLoadingSession(false);
+        router.push("/login");
+      } else {
+        setUser(session.user);
+        setLoadingSession(false);
+
+        // Cargar perfil
+        const { data: profileData } = await supabaseClient
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profileData && isMounted) {
+          setProfile(profileData as UserProfile);
+        }
+      }
+    }
+
+    checkAuthSession();
 
     const {
       data: { subscription },
-    } = supabaseClient.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+      if (!session?.user) {
+        setUser(null);
+        setProfile(null);
+        router.push("/login");
+      } else {
+        setUser(session.user);
+        const { data: profileData } = await supabaseClient
+          .from("profiles")
+          .select("*")
+          .eq("id", session.user.id)
+          .single();
+        if (profileData && isMounted) {
+          setProfile(profileData as UserProfile);
+        }
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
-  // Cargar entradas desde Supabase
+  // Cargar entradas desde Supabase para el usuario activo
   const fetchTasks = useCallback(async () => {
+    if (!user) return;
     const { data, error } = await supabaseClient
       .from("entries")
       .select("*")
@@ -143,12 +197,14 @@ export default function Home() {
       setTasks(data);
     }
     setLoadingTasks(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadEntries() {
+      if (!user) return;
+
       const { data, error } = await supabaseClient
         .from("entries")
         .select("*")
@@ -164,7 +220,9 @@ export default function Home() {
       }
     }
 
-    loadEntries();
+    if (user) {
+      loadEntries();
+    }
 
     return () => {
       isMounted = false;
@@ -175,11 +233,13 @@ export default function Home() {
   const handleLogout = async () => {
     await supabaseClient.auth.signOut();
     setUser(null);
+    setProfile(null);
+    router.push("/login");
   };
 
-  // Crear entrada en Supabase con vinculacion de user_id
+  // Crear entrada en Supabase con vinculacion estricta de user_id
   const handleAddTask = async () => {
-    if (!inputTitle.trim()) return;
+    if (!inputTitle.trim() || !user) return;
 
     setCreating(true);
 
@@ -194,7 +254,7 @@ export default function Home() {
         horizon: targetHorizon,
         content: [],
         is_completed: false,
-        user_id: user?.id || undefined,
+        user_id: user.id,
       })
       .select()
       .single();
@@ -216,7 +276,6 @@ export default function Home() {
   ) => {
     const newStatus = !currentCompletedStatus;
 
-    // Actualizacion optimista
     setTasks((prev) =>
       prev.map((task) =>
         task.id === idToToggle ? { ...task, is_completed: newStatus } : task,
@@ -310,6 +369,24 @@ export default function Home() {
   const activeAreaMeta = AREA_META[currentArea];
   const ActiveAreaIcon = activeAreaMeta.icon;
 
+  // Pantalla de carga / Auth Gate
+  if (loadingSession) {
+    return (
+      <div className="min-h-screen bg-[#090d16] flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+        </div>
+        <p className="text-xs font-mono text-zinc-400 tracking-wider">
+          Verificando sesion de usuario...
+        </p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="flex h-screen bg-[#090d16] overflow-hidden text-zinc-100 font-sans">
       {/* Sidebar lateral */}
@@ -321,7 +398,9 @@ export default function Home() {
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         user={user}
+        profile={profile}
         onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenProfile={() => setIsProfileDrawerOpen(true)}
         onLogout={handleLogout}
       />
 
@@ -603,6 +682,17 @@ export default function Home() {
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
           fetchTasks();
+        }}
+      />
+
+      {/* Drawer de Perfil & Contexto de IA */}
+      <ProfileSettingsDrawer
+        isOpen={isProfileDrawerOpen}
+        onClose={() => setIsProfileDrawerOpen(false)}
+        user={user}
+        profile={profile}
+        onProfileUpdated={(updatedProfile) => {
+          setProfile(updatedProfile);
         }}
       />
 

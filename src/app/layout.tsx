@@ -13,8 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Second Brain - Workspace",
-  description: "Personal Second Brain powered by Gemini & Supabase",
+  title: "Second Brain | Execution Workspace",
+  description: "Personal Second Brain & Execution Operating System powered by Gemini AI and Supabase",
+  icons: {
+    icon: "/icon.svg",
+  },
+  openGraph: {
+    title: "Second Brain | Execution Workspace",
+    description: "High-performance daily execution OS and knowledge architecture",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

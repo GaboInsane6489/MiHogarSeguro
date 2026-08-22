@@ -33,10 +33,20 @@ export type EntryItem = {
   updated_at: string;
 };
 
+export type AiContextData = {
+  profession?: string;
+  goals?: string;
+  custom_instructions?: string;
+  [key: string]: unknown;
+};
+
 export type UserProfile = {
   id: string;
-  full_name?: string;
-  ai_context: Record<string, unknown>;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  preferences?: Record<string, unknown> | null;
+  ai_context: AiContextData;
+  updated_at?: string;
   created_at: string;
 };
 
@@ -77,14 +87,20 @@ export type Database = {
         Row: UserProfile;
         Insert: {
           id: string;
-          full_name?: string;
-          ai_context?: Record<string, unknown>;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          preferences?: Record<string, unknown> | null;
+          ai_context?: AiContextData;
+          updated_at?: string;
           created_at?: string;
         };
         Update: {
           id?: string;
-          full_name?: string;
-          ai_context?: Record<string, unknown>;
+          full_name?: string | null;
+          avatar_url?: string | null;
+          preferences?: Record<string, unknown> | null;
+          ai_context?: AiContextData;
+          updated_at?: string;
           created_at?: string;
         };
         Relationships: [];
