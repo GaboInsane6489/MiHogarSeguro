@@ -236,7 +236,7 @@ export function SecondBrainChatDrawer({
             if (actionMatch) {
               try {
                 parsedAction = JSON.parse(actionMatch[1]);
-                cleanContent = message.content
+                cleanContent = cleanContent
                   .replace(/```task_action\s*[\s\S]*?\s*```/, "")
                   .trim();
               } catch {
@@ -332,6 +332,7 @@ export function SecondBrainChatDrawer({
                     </div>
                   )}
 
+                  {/* Boton Copiar */}
                   <div className="flex items-center justify-between pt-1 border-t border-white/5">
                     {!isUser && (
                       <button
