@@ -38,6 +38,7 @@ import {
   Loader2,
   Paperclip,
   Flag,
+  Menu,
 } from "lucide-react";
 
 type Filter = "all" | "pending" | "completed";
@@ -128,6 +129,7 @@ export default function Home() {
   );
   const [statusFilter, setStatusFilter] = useState<Filter>("all");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Formulario de creacion
   const [inputTitle, setInputTitle] = useState("");
@@ -450,6 +452,8 @@ export default function Home() {
         onSelectHorizon={setCurrentHorizon}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
         user={user}
         profile={profile}
         taskCounts={taskCounts}
@@ -460,8 +464,57 @@ export default function Home() {
       />
 
       {/* Viewport Principal Desacoplado con Contencion Centrada */}
-      <main className="relative z-10 flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto w-full px-6 sm:px-10 py-8 min-h-screen flex flex-col justify-start space-y-6">
+      <main className="relative z-10 flex-1 overflow-y-auto flex flex-col">
+        {/* Mobile Top Header (Exclusivo para móviles < md) */}
+        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#0d1117]/95 backdrop-blur-xl border-b border-white/10 z-20 sticky top-0 shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              title="Abrir menú de navegación"
+              className="p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-300 hover:text-white transition cursor-pointer"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2">
+              <BrandLogo size={18} />
+              <span className="text-xs font-bold text-white tracking-tight">
+                Second Brain
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {profile?.avatar_url ? (
+              <button
+                type="button"
+                onClick={() => setIsProfileDrawerOpen(true)}
+                title="Configuración de perfil"
+                className="w-8 h-8 rounded-xl overflow-hidden border border-white/15 cursor-pointer shadow-sm"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profile.avatar_url}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsProfileDrawerOpen(true)}
+                title="Configuración de perfil"
+                className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-[10px] font-bold text-indigo-400 font-mono cursor-pointer"
+              >
+                {(profile?.full_name || user.email || "U")
+                  .substring(0, 2)
+                  .toUpperCase()}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-8 md:px-12 py-6 sm:py-8 min-h-screen flex flex-col justify-start space-y-5 sm:space-y-6">
           {/* Header Superior y Metricas */}
           <header className="p-5 rounded-2xl bg-[#0d1117]/90 backdrop-blur-xl border border-white/10 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -491,11 +544,11 @@ export default function Home() {
               </div>
 
               {/* Filtros de estado */}
-              <div className="flex gap-1 bg-[#161b22] p-1 rounded-xl border border-white/10 text-xs text-zinc-400">
+              <div className="grid grid-cols-3 sm:flex gap-1 bg-[#161b22] p-1 rounded-xl border border-white/10 text-xs text-zinc-400 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setStatusFilter("all")}
-                  className={`py-1.5 px-3 rounded-lg transition cursor-pointer font-medium ${
+                  className={`py-1.5 px-2 sm:px-3 text-center truncate rounded-lg transition cursor-pointer font-medium ${
                     statusFilter === "all"
                       ? "bg-zinc-800 text-white shadow-xs font-semibold"
                       : "hover:text-white"
@@ -506,7 +559,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("pending")}
-                  className={`py-1.5 px-3 rounded-lg transition cursor-pointer font-medium ${
+                  className={`py-1.5 px-2 sm:px-3 text-center truncate rounded-lg transition cursor-pointer font-medium ${
                     statusFilter === "pending"
                       ? "bg-zinc-800 text-white shadow-xs font-semibold"
                       : "hover:text-white"
@@ -517,7 +570,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setStatusFilter("completed")}
-                  className={`py-1.5 px-3 rounded-lg transition cursor-pointer font-medium ${
+                  className={`py-1.5 px-2 sm:px-3 text-center truncate rounded-lg transition cursor-pointer font-medium ${
                     statusFilter === "completed"
                       ? "bg-zinc-800 text-white shadow-xs font-semibold"
                       : "hover:text-white"
@@ -562,8 +615,8 @@ export default function Home() {
               aiContext={profile?.ai_context}
             />
 
-            <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-3 pt-2 border-t border-white/5">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Selector de Area si esta en 'all' */}
                 {currentArea === "all" && (
                   <select
@@ -601,7 +654,7 @@ export default function Home() {
                 type="button"
                 onClick={handleAddTask}
                 disabled={creating || !inputTitle.trim()}
-                className="h-8 px-4 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 rounded-md shadow-sm transition flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+                className="w-full sm:w-auto h-8 px-4 text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 rounded-md shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>{creating ? "Guardando..." : "Crear Entrada"}</span>
@@ -673,11 +726,11 @@ export default function Home() {
                   return (
                     <div
                       key={task.id}
-                      className={`flex items-center justify-between p-4 rounded-xl bg-[#0d1117]/95 hover:bg-[#161b22] border border-white/10 hover:border-white/25 border-l-4 ${areaBorderAccent} transition-all hover:translate-x-0.5 group shadow-lg`}
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-xl bg-[#0d1117]/95 hover:bg-[#161b22] border border-white/10 hover:border-white/25 border-l-4 ${areaBorderAccent} transition-all hover:translate-x-0.5 group shadow-lg`}
                     >
                       <div
                         onClick={() => setSelectedEntry(task)}
-                        className="flex items-center gap-3.5 min-w-0 flex-1 cursor-pointer"
+                        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
                       >
                         <button
                           type="button"
@@ -695,7 +748,7 @@ export default function Home() {
                         </button>
 
                         <span
-                          className={`text-sm font-medium transition truncate ${
+                          className={`text-xs sm:text-sm font-medium transition truncate ${
                             task.is_completed
                               ? "line-through text-zinc-500 opacity-60"
                               : "text-zinc-100"
@@ -706,7 +759,7 @@ export default function Home() {
                       </div>
 
                       {/* Badges y Acciones Rapidas */}
-                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0 sm:ml-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5 sm:border-transparent">
                         {/* Tag de Area */}
                         <span
                           className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${areaInfo.bgClass} ${areaInfo.borderClass} ${areaInfo.colorClass}`}
@@ -817,7 +870,7 @@ export default function Home() {
                         )}
 
                         {/* Botones de Accion */}
-                        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity ml-auto sm:ml-0">
                           <button
                             type="button"
                             onClick={() => setSelectedEntry(task)}
@@ -919,13 +972,14 @@ export default function Home() {
         }}
       />
 
-      {/* Drawer lateral de detalles */}
+      {/* Modal centralizado de detalles */}
       <EntryDetailDrawer
         entry={selectedEntry}
         isOpen={!!selectedEntry}
         onClose={() => setSelectedEntry(null)}
         aiContext={profile?.ai_context}
         onUpdate={handleUpdateEntry}
+        onDelete={handleDeleteTask}
       />
     </div>
   );
