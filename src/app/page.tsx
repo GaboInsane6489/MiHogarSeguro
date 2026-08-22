@@ -9,7 +9,12 @@ import { EntryDetailDrawer } from "@/components/EntryDetailDrawer";
 import { AuthModal } from "@/components/AuthModal";
 import { ProfileSettingsDrawer } from "@/components/ProfileSettingsDrawer";
 import { SecondBrainChatDrawer } from "@/components/SecondBrainChatDrawer";
-import type { EntryItem, AreaType, HorizonType, UserProfile } from "@/types/database.types";
+import type {
+  EntryItem,
+  AreaType,
+  HorizonType,
+  UserProfile,
+} from "@/types/database.types";
 import type { User } from "@supabase/supabase-js";
 import {
   Briefcase,
@@ -117,7 +122,9 @@ export default function Home() {
 
   // Filtros de navegacion
   const [currentArea, setCurrentArea] = useState<AreaType | "all">("all");
-  const [currentHorizon, setCurrentHorizon] = useState<HorizonType | "all">("all");
+  const [currentHorizon, setCurrentHorizon] = useState<HorizonType | "all">(
+    "all",
+  );
   const [statusFilter, setStatusFilter] = useState<Filter>("all");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -248,7 +255,8 @@ export default function Home() {
     setCreating(true);
 
     const targetArea = currentArea === "all" ? inputArea : currentArea;
-    const targetHorizon = currentHorizon === "all" ? inputHorizon : currentHorizon;
+    const targetHorizon =
+      currentHorizon === "all" ? inputHorizon : currentHorizon;
 
     const { data, error } = await supabaseClient
       .from("entries")
@@ -331,9 +339,7 @@ export default function Home() {
     if (error) {
       console.error("Error al actualizar la entrada:", error.message);
     } else if (data) {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === updatedData.id ? data : t)),
-      );
+      setTasks((prev) => prev.map((t) => (t.id === updatedData.id ? data : t)));
     }
   };
 
@@ -360,15 +366,25 @@ export default function Home() {
       if (statusFilter === "pending" && task.is_completed) return false;
       if (statusFilter === "completed" && !task.is_completed) return false;
       if (currentArea !== "all" && task.area !== currentArea) return false;
-      if (currentHorizon !== "all" && task.horizon !== currentHorizon) return false;
+      if (currentHorizon !== "all" && task.horizon !== currentHorizon)
+        return false;
       return true;
     });
   }, [tasks, statusFilter, currentArea, currentHorizon]);
 
   // Metricas de ejecucion del dia
-  const todayTasks = useMemo(() => tasks.filter((t) => t.horizon === "hoy"), [tasks]);
-  const todayCompleted = useMemo(() => todayTasks.filter((t) => t.is_completed).length, [todayTasks]);
-  const todayProgressPercent = todayTasks.length > 0 ? Math.round((todayCompleted / todayTasks.length) * 100) : 0;
+  const todayTasks = useMemo(
+    () => tasks.filter((t) => t.horizon === "hoy"),
+    [tasks],
+  );
+  const todayCompleted = useMemo(
+    () => todayTasks.filter((t) => t.is_completed).length,
+    [todayTasks],
+  );
+  const todayProgressPercent =
+    todayTasks.length > 0
+      ? Math.round((todayCompleted / todayTasks.length) * 100)
+      : 0;
 
   const activeAreaMeta = AREA_META[currentArea];
   const ActiveAreaIcon = activeAreaMeta.icon;
@@ -419,7 +435,9 @@ export default function Home() {
                 <div
                   className={`w-10 h-10 rounded-xl flex items-center justify-center border ${activeAreaMeta.bgClass} ${activeAreaMeta.borderClass}`}
                 >
-                  <ActiveAreaIcon className={`w-5 h-5 ${activeAreaMeta.colorClass}`} />
+                  <ActiveAreaIcon
+                    className={`w-5 h-5 ${activeAreaMeta.colorClass}`}
+                  />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -529,8 +547,12 @@ export default function Home() {
 
                 {/* Selector de Horizonte */}
                 <select
-                  value={currentHorizon === "all" ? inputHorizon : currentHorizon}
-                  onChange={(e) => setInputHorizon(e.target.value as HorizonType)}
+                  value={
+                    currentHorizon === "all" ? inputHorizon : currentHorizon
+                  }
+                  onChange={(e) =>
+                    setInputHorizon(e.target.value as HorizonType)
+                  }
                   disabled={currentHorizon !== "all"}
                   className="h-8 px-2.5 text-xs bg-zinc-800 text-zinc-300 border border-white/10 rounded-md focus:outline-none cursor-pointer disabled:opacity-50"
                 >
@@ -581,7 +603,8 @@ export default function Home() {
                   No hay entradas en esta vista
                 </p>
                 <p className="text-xs text-zinc-500">
-                  Crea una nueva entrada usando el formulario superior o selecciona otra area en la barra lateral.
+                  Crea una nueva entrada usando el formulario superior o
+                  selecciona otra area en la barra lateral.
                 </p>
               </div>
             ) : (
@@ -589,7 +612,8 @@ export default function Home() {
               <div className="space-y-2">
                 {filteredTasks.map((task) => {
                   const areaInfo = AREA_META[task.area] || AREA_META.personal;
-                  const horizonInfo = HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
+                  const horizonInfo =
+                    HORIZON_LABELS[task.horizon] || HORIZON_LABELS.hoy;
                   const HorizonIcon = horizonInfo.icon;
 
                   return (
@@ -649,8 +673,8 @@ export default function Home() {
                               task.priority === "urgente"
                                 ? "text-rose-400 border-rose-500/40 bg-rose-500/15 font-bold"
                                 : task.priority === "alta"
-                                ? "text-amber-400 border-amber-500/30 bg-amber-500/10"
-                                : "text-zinc-500 border-white/5 bg-zinc-800/40"
+                                  ? "text-amber-400 border-amber-500/30 bg-amber-500/10"
+                                  : "text-zinc-500 border-white/5 bg-zinc-800/40"
                             }`}
                           >
                             <Flag className="w-2.5 h-2.5" />
@@ -659,7 +683,7 @@ export default function Home() {
                         )}
 
                         {/* Badge de Fecha Limite (due_date) */}
-                        {task.due_date && (
+                        {task.due_date &&
                           (() => {
                             const due = new Date(task.due_date);
                             const today = new Date();
@@ -667,20 +691,22 @@ export default function Home() {
                             const dueOnly = new Date(due);
                             dueOnly.setHours(0, 0, 0, 0);
                             const diffDays = Math.ceil(
-                              (dueOnly.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                              (dueOnly.getTime() - today.getTime()) /
+                                (1000 * 60 * 60 * 24),
                             );
 
-                            const isOverdue = diffDays < 0 && !task.is_completed;
+                            const isOverdue =
+                              diffDays < 0 && !task.is_completed;
                             const isDueToday = diffDays === 0;
 
                             const label = isOverdue
                               ? "Vencida"
                               : isDueToday
-                              ? "Vence Hoy"
-                              : due.toLocaleDateString("es-ES", {
-                                  day: "numeric",
-                                  month: "short",
-                                });
+                                ? "Vence Hoy"
+                                : due.toLocaleDateString("es-ES", {
+                                    day: "numeric",
+                                    month: "short",
+                                  });
 
                             return (
                               <span
@@ -688,16 +714,15 @@ export default function Home() {
                                   isOverdue
                                     ? "text-rose-400 border-rose-500/40 bg-rose-500/15 font-semibold"
                                     : isDueToday
-                                    ? "text-amber-400 border-amber-500/40 bg-amber-500/15 font-medium"
-                                    : "text-zinc-400 border-white/10 bg-zinc-800/60"
+                                      ? "text-amber-400 border-amber-500/40 bg-amber-500/15 font-medium"
+                                      : "text-zinc-400 border-white/10 bg-zinc-800/60"
                                 }`}
                               >
                                 <Calendar className="w-2.5 h-2.5" />
                                 <span>{label}</span>
                               </span>
                             );
-                          })()
-                        )}
+                          })()}
 
                         {/* Indicador de Adjuntos de Archivos */}
                         {task.content &&

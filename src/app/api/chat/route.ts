@@ -14,10 +14,9 @@ interface ChatPayload {
 }
 
 const FALLBACK_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-pro-latest",
-  "gemini-2.0-flash-lite-preview-02-05",
+  "gemini-3.6-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-pro",
 ];
 
 async function generateChatWithFallback(
@@ -29,7 +28,7 @@ async function generateChatWithFallback(
     };
   },
 ) {
-  let lastError: unknown;
+  const errors: string[] = [];
 
   for (const model of FALLBACK_MODELS) {
     try {
@@ -40,21 +39,22 @@ async function generateChatWithFallback(
       });
       return response;
     } catch (error) {
-      lastError = error;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`Aviso en chat: Modelo ${model} devolvió error (${errorMsg}), intentando con siguiente modelo...`);
+      errors.push(`[${model}]: ${errorMsg}`);
+      console.error(`Error en modelo ${model}:`, errorMsg);
     }
   }
 
-  throw lastError;
+  throw new Error(`Fallaron los modelos disponibles de Gemini:\n${errors.join("\n")}`);
 }
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const rawApiKey = process.env.GEMINI_API_KEY;
+    const apiKey = rawApiKey ? rawApiKey.trim() : "";
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY no está configurada en el servidor." },
+        { error: "GEMINI_API_KEY no está configurada en el archivo .env.local del servidor." },
         { status: 500 },
       );
     }
@@ -130,13 +130,10 @@ PAUTAS DE RESPUESTA:
       return `${sender}: ${m.content}`;
     }).join("\n\n");
 
-    const fullPrompt = `${conversationPrompt}\n\nCopiloto:`;
+    const fullPrompt = `${systemInstruction}\n\n=== HISTORIAL DE CONVERSACIÓN ===\n${conversationPrompt}\n\nCopiloto:`;
 
     const response = await generateChatWithFallback(ai, {
       contents: fullPrompt,
-      config: {
-        systemInstruction,
-      },
     });
 
     const reply = response.text?.trim() || "No pude generar una respuesta en este momento.";

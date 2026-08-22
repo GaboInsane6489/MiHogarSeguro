@@ -34,10 +34,9 @@ const DOMAIN_INSTRUCTIONS: Record<AreaType, string> = {
 };
 
 const FALLBACK_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-pro-latest",
-  "gemini-2.0-flash-lite-preview-02-05",
+  "gemini-3.6-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-pro",
 ];
 
 // Helper para ejecutar generación con cascada de fallback ante picos de demanda o saturación
@@ -52,7 +51,7 @@ async function generateWithFallback(
     };
   },
 ) {
-  let lastError: unknown;
+  const errors: string[] = [];
 
   for (const model of FALLBACK_MODELS) {
     try {
@@ -63,21 +62,22 @@ async function generateWithFallback(
       });
       return response;
     } catch (error) {
-      lastError = error;
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.warn(`Aviso en generate: Modelo ${model} devolvió error (${errorMsg}), intentando con siguiente modelo de respaldo...`);
+      errors.push(`[${model}]: ${errorMsg}`);
+      console.error(`Error en modelo ${model}:`, errorMsg);
     }
   }
 
-  throw lastError;
+  throw new Error(`Fallaron los modelos de Gemini:\n${errors.join("\n")}`);
 }
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const rawApiKey = process.env.GEMINI_API_KEY;
+    const apiKey = rawApiKey ? rawApiKey.trim() : "";
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY no está configurada en el servidor." },
+        { error: "GEMINI_API_KEY no está configurada en .env.local." },
         { status: 500 },
       );
     }
