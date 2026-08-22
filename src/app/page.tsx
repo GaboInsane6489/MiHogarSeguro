@@ -431,25 +431,16 @@ export default function Home() {
 
   return (
     <div className="relative flex h-screen bg-[#090d16] overflow-hidden text-zinc-100 font-sans">
-      {/* Fondo de Pantalla Fijo Personalizado Completo */}
+      {/* Fondo de Pantalla Fijo Personalizado Proporcional */}
       {profile?.banner_url && (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#090d16]">
-          {/* Capa de ambiente difuminado para rellenar marcos laterales */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={profile.banner_url}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-35 scale-110"
-          />
-          {/* Imagen principal completa, sin ningun recorte y nitida */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={profile.banner_url}
-            alt="Fondo de pantalla"
-            className="relative w-full h-full object-contain"
-          />
-          {/* Velo de contraste oscuro para legibilidad cristalina */}
-          <div className="absolute inset-0 bg-black/40" />
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
+          style={{
+            backgroundImage: `url(${profile.banner_url})`,
+          }}
+        >
+          {/* Velo de contraste oscuro para legibilidad */}
+          <div className="absolute inset-0 bg-black/50" />
         </div>
       )}
 

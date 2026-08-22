@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   X,
   User as UserIcon,
   Sparkles,
   Camera,
-  Image as ImageIcon,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -14,9 +13,9 @@ import {
   Briefcase,
   Target,
   FileText,
-  Trash2,
   Palette,
-  FolderHeart,
+  Check,
+  Ban,
 } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/imageOptimizer";
@@ -36,29 +35,82 @@ type TabType = "general" | "ai_context";
 interface WallpaperPreset {
   id: string;
   name: string;
+  category: string;
   url: string;
 }
 
-const WALLPAPER_PRESETS: WallpaperPreset[] = [
+export const WALLPAPER_PRESETS: WallpaperPreset[] = [
   {
     id: "obsidian-mesh",
     name: "Obsidian Mesh",
-    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop",
+    category: "Geométrico 3D",
+    url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=90&w=3840&auto=format&fit=crop",
   },
   {
     id: "cyber-indigo",
     name: "Cyber Indigo",
-    url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1920&auto=format&fit=crop",
+    category: "Atmósfera",
+    url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=90&w=3840&auto=format&fit=crop",
   },
   {
-    id: "emerald-dark",
+    id: "emerald-aurora",
     name: "Emerald Aurora",
-    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1920&auto=format&fit=crop",
+    category: "Naturaleza Dark",
+    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=90&w=3840&auto=format&fit=crop",
   },
   {
-    id: "titanium-carbon",
+    id: "deep-space",
     name: "Deep Space",
-    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1920&auto=format&fit=crop",
+    category: "Galaxia",
+    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "cyberpunk-rain",
+    name: "Cyberpunk Rain",
+    category: "Urbano Nocturno",
+    url: "https://images.unsplash.com/photo-1514565131-fce0801e5785?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "dark-mountains",
+    name: "Dark Mountains",
+    category: "Paisaje Crepuscular",
+    url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "neon-horizon",
+    name: "Neon Synthwave",
+    category: "Cyberwave",
+    url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "midnight-forest",
+    name: "Midnight Forest",
+    category: "Bosque Místico",
+    url: "https://images.unsplash.com/photo-1511497584788-87676104235f?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "black-dunes",
+    name: "Obsidian Dunes",
+    category: "Minimalismo",
+    url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "tech-matrix",
+    name: "Titanium Matrix",
+    category: "Tech Sci-Fi",
+    url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "anime-twilight",
+    name: "Tokyo Twilight",
+    category: "Estilo Anime",
+    url: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=90&w=3840&auto=format&fit=crop",
+  },
+  {
+    id: "cosmic-eclipse",
+    name: "Cosmic Eclipse",
+    category: "Astro Dark",
+    url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=90&w=3840&auto=format&fit=crop",
   },
 ];
 
@@ -76,29 +128,6 @@ export function ProfileSettingsModal({
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [bannerUrl, setBannerUrl] = useState(profile?.banner_url || "");
 
-  // Lista de fondos personalizados guardados por el usuario (Inicializador diferido React 19)
-  const [savedWallpapers, setSavedWallpapers] = useState<string[]>(() => {
-    const fromProfile = Array.isArray(profile?.preferences?.saved_wallpapers)
-      ? (profile?.preferences?.saved_wallpapers as string[])
-      : [];
-
-    let fromStorage: string[] = [];
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem("sb_saved_wallpapers");
-        if (raw) fromStorage = JSON.parse(raw);
-      } catch {
-        // Ignore local parse error
-      }
-    }
-
-    const combined = Array.from(new Set([...fromProfile, ...fromStorage]));
-    if (profile?.banner_url && !combined.includes(profile.banner_url)) {
-      combined.unshift(profile.banner_url);
-    }
-    return combined;
-  });
-
   // AI Context State
   const [profession, setProfession] = useState(
     profile?.ai_context?.profession || "",
@@ -111,18 +140,16 @@ export function ProfileSettingsModal({
   // Loading & Feedback
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
-  const bannerInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarInputRef = React.useRef<HTMLInputElement | null>(null);
 
   if (!isOpen) return null;
 
-  // Subir y optimizar Avatar (400x400 WebP)
+  // Subir y optimizar Avatar
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -134,11 +161,10 @@ export function ProfileSettingsModal({
       const optimized = await optimizeImage(file, {
         maxWidth: 400,
         maxHeight: 400,
-        quality: 0.88,
+        quality: 0.9,
         format: "image/webp",
       });
 
-      const sizeKb = Math.round(optimized.size / 1024);
       const fileExt = "webp";
       const filePath = `avatars/${user.id}-${Date.now()}.${fileExt}`;
 
@@ -158,7 +184,7 @@ export function ProfileSettingsModal({
       setAvatarUrl(data.publicUrl);
       setFeedback({
         type: "success",
-        message: `Foto de perfil optimizada (${sizeKb} KB WebP). Guarda para aplicar los cambios.`,
+        message: "Foto de perfil actualizada. Guarda para aplicar.",
       });
     } catch (err: unknown) {
       const msg =
@@ -169,108 +195,15 @@ export function ProfileSettingsModal({
     }
   };
 
-  // Subir y optimizar Wallpaper / Banner (2560x1440 2K QHD WebP)
-  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    setUploadingBanner(true);
-    setFeedback(null);
-
-    try {
-      const optimized = await optimizeImage(file, {
-        maxWidth: 2560,
-        maxHeight: 1440,
-        quality: 0.95,
-        format: "image/webp",
-      });
-
-      const sizeKb = Math.round(optimized.size / 1024);
-      const fileExt = "webp";
-      const filePath = `banners/${user.id}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabaseClient.storage
-        .from("entry-attachments")
-        .upload(filePath, optimized, {
-          cacheControl: "3600",
-          upsert: true,
-        });
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabaseClient.storage
-        .from("entry-attachments")
-        .getPublicUrl(filePath);
-
-      const newUrl = data.publicUrl;
-      setBannerUrl(newUrl);
-
-      // Guardar en la lista de fondos personalizados
-      const updatedList = Array.from(new Set([newUrl, ...savedWallpapers]));
-      setSavedWallpapers(updatedList);
-      try {
-        localStorage.setItem("sb_saved_wallpapers", JSON.stringify(updatedList));
-      } catch {
-        // Ignore local storage error
-      }
-
-      setFeedback({
-        type: "success",
-        message: `Fondo optimizado (${sizeKb} KB WebP) y guardado en tu colección. Guarda para aplicar.`,
-      });
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Error al subir fondo de pantalla.";
-      setFeedback({ type: "error", message: msg });
-    } finally {
-      setUploadingBanner(false);
-    }
-  };
-
-  // Quitar Fondo / Restablecer
-  const handleRemoveBanner = () => {
-    setBannerUrl("");
-    setFeedback({
-      type: "success",
-      message:
-        "Fondo removido. Se usará el tema oscuro nativo. Guarda para aplicar.",
-    });
-  };
-
-  // Quitar Avatar
-  const handleRemoveAvatar = () => {
-    setAvatarUrl("");
-    setFeedback({
-      type: "success",
-      message:
-        "Foto de perfil removida. Se usarán tus iniciales. Guarda para aplicar.",
-    });
-  };
-
-  // Seleccionar Preset o Fondo Guardado
-  const handleSelectWallpaper = (url: string, title?: string) => {
+  // Seleccionar Preset o Sin Fondo
+  const handleSelectWallpaper = (url: string, name: string) => {
     setBannerUrl(url);
     setFeedback({
       type: "success",
-      message: `Fondo ${title ? `"${title}"` : ""} seleccionado. Guarda para aplicar.`,
+      message: url
+        ? `Fondo "${name}" seleccionado. Guarda para aplicar.`
+        : "Tema oscuro nativo seleccionado. Guarda para aplicar.",
     });
-  };
-
-  // Eliminar un fondo de la lista personalizada
-  const handleDeleteSavedWallpaper = (urlToDelete: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const updated = savedWallpapers.filter((u) => u !== urlToDelete);
-    setSavedWallpapers(updated);
-    try {
-      localStorage.setItem("sb_saved_wallpapers", JSON.stringify(updated));
-    } catch {
-      // Ignore
-    }
-    if (bannerUrl === urlToDelete) {
-      setBannerUrl("");
-    }
   };
 
   // Guardar Cambios en Supabase
@@ -286,10 +219,6 @@ export function ProfileSettingsModal({
         full_name: fullName.trim(),
         avatar_url: avatarUrl.trim() || null,
         banner_url: bannerUrl.trim() || null,
-        preferences: {
-          ...(profile?.preferences || {}),
-          saved_wallpapers: savedWallpapers,
-        },
         ai_context: {
           profession: profession.trim(),
           goals: goals.trim(),
@@ -313,7 +242,7 @@ export function ProfileSettingsModal({
         onProfileUpdated(data as UserProfile);
         setFeedback({
           type: "success",
-          message: "¡Perfil y colección de fondos guardados exitosamente!",
+          message: "¡Perfil y fondo actualizados exitosamente!",
         });
         setTimeout(() => {
           onClose();
@@ -346,95 +275,46 @@ export function ProfileSettingsModal({
         aria-modal="true"
         className="relative w-full max-w-2xl bg-[#0d1117]/98 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[92vh] text-zinc-100"
       >
-        {/* Header con Banner / Fondo de Portada con Efecto Completo y Ambiente */}
-        <div className="relative h-32 sm:h-36 w-full bg-[#0d1117] border-b border-white/10 overflow-hidden shrink-0">
+        {/* Header con Banner de Portada Elegante */}
+        <div className="relative h-32 sm:h-36 w-full bg-gradient-to-r from-indigo-950 via-slate-900 to-zinc-950 border-b border-white/10 overflow-hidden shrink-0">
           {bannerUrl ? (
-            <>
-              {/* Capa de ambiente difuminado */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={bannerUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-110"
-              />
-              {/* Imagen principal completa sin recortes */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={bannerUrl}
-                alt="Fondo de pantalla del workspace"
-                className="relative w-full h-full object-contain"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1117]/80 via-transparent to-transparent pointer-events-none" />
-            </>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={bannerUrl}
+              alt="Banner de perfil"
+              className="w-full h-full object-cover opacity-85 transition-opacity"
+            />
           ) : (
             <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-zinc-900/40 to-transparent flex items-center justify-center">
               <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
-                Fondo Oscuro Nativo
+                Tema Oscuro Nativo
               </span>
             </div>
           )}
 
-          {/* Botones de Acción de Portada */}
-          <div className="absolute top-2.5 right-11 flex items-center gap-1.5 z-10">
-            {bannerUrl && (
-              <button
-                type="button"
-                onClick={handleRemoveBanner}
-                title="Quitar fondo y volver al tema oscuro nativo"
-                className="p-1.5 rounded-lg bg-black/70 hover:bg-rose-500/20 hover:text-rose-300 text-zinc-300 border border-white/10 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Quitar</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => bannerInputRef.current?.click()}
-              disabled={uploadingBanner}
-              title="Subir nuevo fondo de pantalla (2K QHD WebP)"
-              className="p-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/40 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md"
-            >
-              {uploadingBanner ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <ImageIcon className="w-3.5 h-3.5" />
-              )}
-              <span>{bannerUrl ? "Cambiar Fondo" : "Subir Fondo"}</span>
-            </button>
-          </div>
-
-          <input
-            ref={bannerInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleBannerUpload}
-          />
-
-          {/* Botón Cerrar */}
+          {/* Botón Cerrar Modal */}
           <button
             type="button"
             onClick={onClose}
             title="Cerrar modal"
-            className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/70 hover:bg-black/90 text-zinc-400 hover:text-white border border-white/10 backdrop-blur-md transition cursor-pointer z-10"
+            className="absolute top-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/80 text-zinc-400 hover:text-white border border-white/10 backdrop-blur-md transition cursor-pointer z-10"
           >
             <X className="w-4 h-4" />
           </button>
 
           {/* Avatar Superpuesto */}
-          <div className="absolute -bottom-5 left-5 flex items-end gap-3 z-10">
+          <div className="absolute -bottom-6 left-6 flex items-end gap-4 z-10">
             <div className="relative group">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-zinc-900 border-2 border-indigo-500/60 shadow-2xl overflow-hidden flex items-center justify-center">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-zinc-900 border-2 border-indigo-500/60 shadow-2xl overflow-hidden flex items-center justify-center">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={avatarUrl}
-                    alt="Foto de perfil"
+                    alt="Avatar de usuario"
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-lg sm:text-xl font-bold text-indigo-400 font-mono">
+                  <span className="text-xl sm:text-2xl font-bold text-indigo-400 font-mono">
                     {userInitials}
                   </span>
                 )}
@@ -445,7 +325,7 @@ export function ProfileSettingsModal({
                   onClick={() => avatarInputRef.current?.click()}
                   disabled={uploadingAvatar}
                   title="Cambiar foto de perfil"
-                  className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1 cursor-pointer"
+                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1 cursor-pointer"
                 >
                   {uploadingAvatar ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -466,22 +346,11 @@ export function ProfileSettingsModal({
                 onChange={handleAvatarUpload}
               />
             </div>
-
-            {avatarUrl && (
-              <button
-                type="button"
-                onClick={handleRemoveAvatar}
-                title="Quitar foto y usar iniciales"
-                className="mb-1 p-1 rounded-lg bg-zinc-900/90 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 border border-white/10 transition cursor-pointer text-[10px] font-mono"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            )}
           </div>
         </div>
 
         {/* Navegación por Pestañas */}
-        <div className="pt-7 px-6 border-b border-white/10 flex items-center gap-6 bg-[#161b22]/40">
+        <div className="pt-8 px-6 border-b border-white/10 flex items-center gap-6 bg-[#161b22]/40">
           <button
             type="button"
             onClick={() => setActiveTab("general")}
@@ -542,7 +411,7 @@ export function ProfileSettingsModal({
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Ej: Gabriel Martínez"
+                  placeholder="Ej: Gabriel González"
                   className="w-full h-11 px-4 text-xs sm:text-sm bg-zinc-900/90 border border-white/10 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
                 />
               </div>
@@ -560,63 +429,50 @@ export function ProfileSettingsModal({
                 />
               </div>
 
-              {/* Galería de Mis Fondos Guardados */}
-              {savedWallpapers.length > 0 && (
-                <div className="space-y-3 pt-2">
+              {/* Galería de Fondos Predeterminados Curados */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FolderHeart className="w-4 h-4 text-indigo-400" />
-                    <label className="text-xs font-semibold text-zinc-200">
-                      Mis Fondos Guardados ({savedWallpapers.length})
+                    <Palette className="w-4 h-4 text-indigo-400" />
+                    <label className="text-xs font-bold text-zinc-200">
+                      Fondos de Pantalla Predeterminados (Curados 4K/2K)
                     </label>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {savedWallpapers.map((url, idx) => {
-                      const isSelected = bannerUrl === url;
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => handleSelectWallpaper(url)}
-                          className={`group relative h-20 rounded-xl border overflow-hidden p-2 flex flex-col justify-between transition cursor-pointer ${
-                            isSelected
-                              ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-lg"
-                              : "border-white/10 hover:border-white/30"
-                          }`}
-                        >
-                          <div
-                            className="absolute inset-0 bg-cover bg-center transition-transform group-hover:scale-105"
-                            style={{ backgroundImage: `url(${url})` }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                          {/* Boton Eliminar Fondo Guardado */}
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteSavedWallpaper(url, e)}
-                            title="Eliminar de mi colección"
-                            className="relative z-10 self-end p-1 rounded-md bg-black/60 hover:bg-rose-500/30 text-zinc-400 hover:text-rose-300 opacity-0 group-hover:opacity-100 transition"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-
-                          <span className="relative z-10 text-[10px] font-mono text-zinc-300 font-bold truncate">
-                            {isSelected ? "Activo" : `Fondo ${idx + 1}`}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <span className="text-[10px] text-zinc-500 font-mono">
+                    Optimizados para PC & Móvil
+                  </span>
                 </div>
-              )}
 
-              {/* Galería de Fondos Prediseñados */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-indigo-400" />
-                  <label className="text-xs font-semibold text-zinc-200">
-                    Fondos de Pantalla Prediseñados (Presets Dark)
-                  </label>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {/* Opción Sin Fondo / Tema Oscuro Nativo */}
+                  <button
+                    type="button"
+                    onClick={() => handleSelectWallpaper("", "Tema Oscuro")}
+                    className={`group relative h-24 rounded-2xl border overflow-hidden p-3 flex flex-col justify-between transition cursor-pointer text-left ${
+                      !bannerUrl
+                        ? "border-indigo-500 ring-2 ring-indigo-500/60 bg-indigo-500/10 shadow-xl"
+                        : "border-white/10 hover:border-white/30 bg-[#090d16]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Ban className="w-4 h-4 text-zinc-400" />
+                      {!bannerUrl && (
+                        <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-white block">
+                        Tema Oscuro
+                      </span>
+                      <span className="text-[10px] text-zinc-500 font-mono">
+                        Sin fondo (Nativo)
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Presets Curados */}
                   {WALLPAPER_PRESETS.map((preset) => {
                     const isSelected = bannerUrl === preset.url;
                     return (
@@ -626,18 +482,30 @@ export function ProfileSettingsModal({
                         onClick={() =>
                           handleSelectWallpaper(preset.url, preset.name)
                         }
-                        className={`group relative h-20 rounded-xl border overflow-hidden p-2 flex flex-col justify-end transition cursor-pointer ${
+                        className={`group relative h-24 rounded-2xl border overflow-hidden p-3 flex flex-col justify-between transition cursor-pointer text-left shadow-md ${
                           isSelected
-                            ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-lg"
+                            ? "border-indigo-500 ring-2 ring-indigo-500/60 shadow-xl"
                             : "border-white/10 hover:border-white/30"
                         }`}
                       >
                         <div
-                          className="absolute inset-0 bg-cover bg-center transition-transform group-hover:scale-105"
+                          className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-105"
                           style={{ backgroundImage: `url(${preset.url})` }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                        <span className="relative z-10 text-[11px] font-bold text-white truncate">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20" />
+
+                        <div className="relative z-10 flex items-center justify-between">
+                          <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/60 text-zinc-300 border border-white/10">
+                            {preset.category}
+                          </span>
+                          {isSelected && (
+                            <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-sm">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="relative z-10 text-xs font-bold text-white truncate">
                           {preset.name}
                         </span>
                       </button>
