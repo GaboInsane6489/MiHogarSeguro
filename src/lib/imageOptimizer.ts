@@ -1,13 +1,13 @@
 /**
- * Utilidad de optimización y compresión de imágenes en el cliente (Browser Canvas).
- * Convierte imágenes pesadas (PNG/JPG/HEIC) a formato WebP optimizado (< 150KB)
- * ajustando dimensiones máximas para avatares y banners sin pérdida perceptible de calidad.
+ * Utilidad de optimización y compresión de imágenes de alta fidelidad en el cliente (Browser Canvas).
+ * Preserva nitidez cristalina en pantallas de alta resolución (2K/4K) ajustando dimensiones máximas
+ * y ratio proporcional sin pérdidas agresivas de color ni compresión destructiva.
  */
 
 export interface OptimizeOptions {
   maxWidth?: number;
   maxHeight?: number;
-  quality?: number; // 0.1 a 1.0 (default 0.85)
+  quality?: number; // 0.1 a 1.0 (default 0.94)
   format?: "image/webp" | "image/jpeg" | "image/png";
 }
 
@@ -16,15 +16,15 @@ export async function optimizeImage(
   options: OptimizeOptions = {},
 ): Promise<File> {
   const {
-    maxWidth = 1200,
-    maxHeight = 1200,
-    quality = 0.85,
+    maxWidth = 2560,
+    maxHeight = 1440,
+    quality = 0.94,
     format = "image/webp",
   } = options;
 
   return new Promise((resolve, reject) => {
     // Si no estamos en entorno navegador, devolver el archivo original
-    if (typeof window === "undefined" || !window.createImageBitmap) {
+    if (typeof window === "undefined") {
       resolve(file);
       return;
     }
@@ -37,25 +37,33 @@ export async function optimizeImage(
       img.src = event.target?.result as string;
 
       img.onload = () => {
-        let width = img.width;
-        let height = img.height;
+        const originalWidth = img.naturalWidth || img.width;
+        const originalHeight = img.naturalHeight || img.height;
 
-        // Calcular relación de aspecto
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
+        // Calcular ratio proporcional de contención
+        const ratio = Math.min(
+          maxWidth / originalWidth,
+          maxHeight / originalHeight,
+          1,
+        );
+        const targetWidth = Math.round(originalWidth * ratio);
+        const targetHeight = Math.round(originalHeight * ratio);
+
+        // Si la imagen ya tiene dimensiones adecuadas y pesa menos de 3.5MB, devolver archivo original
+        if (
+          ratio === 1 &&
+          file.size <= 3.5 * 1024 * 1024 &&
+          (file.type === "image/webp" ||
+            file.type === "image/jpeg" ||
+            file.type === "image/png")
+        ) {
+          resolve(file);
+          return;
         }
 
         const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
@@ -63,10 +71,10 @@ export async function optimizeImage(
           return;
         }
 
-        // Renderizado suavizado de alta calidad
+        // Renderizado suavizado de máxima calidad
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, 0, 0, width, height);
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
         canvas.toBlob(
           (blob) => {
@@ -76,7 +84,8 @@ export async function optimizeImage(
             }
 
             const extension = format === "image/webp" ? "webp" : "jpg";
-            const cleanName = file.name.substring(0, file.name.lastIndexOf(".")) || "image";
+            const cleanName =
+              file.name.substring(0, file.name.lastIndexOf(".")) || "wallpaper";
             const optimizedFile = new File(
               [blob],
               `${cleanName}-opt.${extension}`,
@@ -91,7 +100,7 @@ export async function optimizeImage(
       };
 
       img.onerror = () => {
-        reject(new Error("Error al procesar y cargar la imagen para optimización."));
+        reject(new Error("Error al decodificar la imagen."));
       };
     };
 

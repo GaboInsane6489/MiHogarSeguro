@@ -16,6 +16,7 @@ import {
   FileText,
   Trash2,
   Palette,
+  FolderHeart,
 } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/imageOptimizer";
@@ -36,7 +37,6 @@ interface WallpaperPreset {
   id: string;
   name: string;
   url: string;
-  previewBg: string;
 }
 
 const WALLPAPER_PRESETS: WallpaperPreset[] = [
@@ -44,25 +44,21 @@ const WALLPAPER_PRESETS: WallpaperPreset[] = [
     id: "obsidian-mesh",
     name: "Obsidian Mesh",
     url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop",
-    previewBg: "from-zinc-900 via-zinc-950 to-black",
   },
   {
     id: "cyber-indigo",
     name: "Cyber Indigo",
     url: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1920&auto=format&fit=crop",
-    previewBg: "from-indigo-950 via-slate-900 to-black",
   },
   {
     id: "emerald-dark",
     name: "Emerald Aurora",
     url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1920&auto=format&fit=crop",
-    previewBg: "from-emerald-950 via-slate-900 to-black",
   },
   {
     id: "titanium-carbon",
     name: "Deep Space",
     url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=1920&auto=format&fit=crop",
-    previewBg: "from-purple-950 via-zinc-900 to-black",
   },
 ];
 
@@ -79,6 +75,29 @@ export function ProfileSettingsModal({
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
   const [bannerUrl, setBannerUrl] = useState(profile?.banner_url || "");
+
+  // Lista de fondos personalizados guardados por el usuario (Inicializador diferido React 19)
+  const [savedWallpapers, setSavedWallpapers] = useState<string[]>(() => {
+    const fromProfile = Array.isArray(profile?.preferences?.saved_wallpapers)
+      ? (profile?.preferences?.saved_wallpapers as string[])
+      : [];
+
+    let fromStorage: string[] = [];
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("sb_saved_wallpapers");
+        if (raw) fromStorage = JSON.parse(raw);
+      } catch {
+        // Ignore local parse error
+      }
+    }
+
+    const combined = Array.from(new Set([...fromProfile, ...fromStorage]));
+    if (profile?.banner_url && !combined.includes(profile.banner_url)) {
+      combined.unshift(profile.banner_url);
+    }
+    return combined;
+  });
 
   // AI Context State
   const [profession, setProfession] = useState(
@@ -150,7 +169,7 @@ export function ProfileSettingsModal({
     }
   };
 
-  // Subir y optimizar Wallpaper / Banner (1920x1080 Full HD WebP)
+  // Subir y optimizar Wallpaper / Banner (2560x1440 2K QHD WebP)
   const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -160,9 +179,9 @@ export function ProfileSettingsModal({
 
     try {
       const optimized = await optimizeImage(file, {
-        maxWidth: 1920,
-        maxHeight: 1080,
-        quality: 0.85,
+        maxWidth: 2560,
+        maxHeight: 1440,
+        quality: 0.95,
         format: "image/webp",
       });
 
@@ -183,10 +202,21 @@ export function ProfileSettingsModal({
         .from("entry-attachments")
         .getPublicUrl(filePath);
 
-      setBannerUrl(data.publicUrl);
+      const newUrl = data.publicUrl;
+      setBannerUrl(newUrl);
+
+      // Guardar en la lista de fondos personalizados
+      const updatedList = Array.from(new Set([newUrl, ...savedWallpapers]));
+      setSavedWallpapers(updatedList);
+      try {
+        localStorage.setItem("sb_saved_wallpapers", JSON.stringify(updatedList));
+      } catch {
+        // Ignore local storage error
+      }
+
       setFeedback({
         type: "success",
-        message: `Fondo de pantalla optimizado a Full HD (${sizeKb} KB WebP). Guarda para aplicar.`,
+        message: `Fondo optimizado (${sizeKb} KB WebP) y guardado en tu colección. Guarda para aplicar.`,
       });
     } catch (err: unknown) {
       const msg =
@@ -219,13 +249,28 @@ export function ProfileSettingsModal({
     });
   };
 
-  // Seleccionar Preset de Fondo
-  const handleSelectPreset = (presetUrl: string, presetName: string) => {
-    setBannerUrl(presetUrl);
+  // Seleccionar Preset o Fondo Guardado
+  const handleSelectWallpaper = (url: string, title?: string) => {
+    setBannerUrl(url);
     setFeedback({
       type: "success",
-      message: `Fondo predeterminado "${presetName}" seleccionado. Guarda para aplicar.`,
+      message: `Fondo ${title ? `"${title}"` : ""} seleccionado. Guarda para aplicar.`,
     });
+  };
+
+  // Eliminar un fondo de la lista personalizada
+  const handleDeleteSavedWallpaper = (urlToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = savedWallpapers.filter((u) => u !== urlToDelete);
+    setSavedWallpapers(updated);
+    try {
+      localStorage.setItem("sb_saved_wallpapers", JSON.stringify(updated));
+    } catch {
+      // Ignore
+    }
+    if (bannerUrl === urlToDelete) {
+      setBannerUrl("");
+    }
   };
 
   // Guardar Cambios en Supabase
@@ -241,6 +286,10 @@ export function ProfileSettingsModal({
         full_name: fullName.trim(),
         avatar_url: avatarUrl.trim() || null,
         banner_url: bannerUrl.trim() || null,
+        preferences: {
+          ...(profile?.preferences || {}),
+          saved_wallpapers: savedWallpapers,
+        },
         ai_context: {
           profession: profession.trim(),
           goals: goals.trim(),
@@ -264,7 +313,7 @@ export function ProfileSettingsModal({
         onProfileUpdated(data as UserProfile);
         setFeedback({
           type: "success",
-          message: "¡Perfil y fondo actualizados exitosamente!",
+          message: "¡Perfil y colección de fondos guardados exitosamente!",
         });
         setTimeout(() => {
           onClose();
@@ -297,15 +346,26 @@ export function ProfileSettingsModal({
         aria-modal="true"
         className="relative w-full max-w-2xl bg-[#0d1117]/98 border border-white/15 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto flex flex-col max-h-[92vh] text-zinc-100"
       >
-        {/* Header con Banner / Fondo de Portada */}
-        <div className="relative h-36 sm:h-44 w-full bg-gradient-to-r from-indigo-950 via-slate-900 to-zinc-950 border-b border-white/10 overflow-hidden shrink-0">
+        {/* Header con Banner / Fondo de Portada con Efecto Completo y Ambiente */}
+        <div className="relative h-32 sm:h-36 w-full bg-[#0d1117] border-b border-white/10 overflow-hidden shrink-0">
           {bannerUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={bannerUrl}
-              alt="Fondo de pantalla del workspace"
-              className="w-full h-full object-cover opacity-85 transition-opacity"
-            />
+            <>
+              {/* Capa de ambiente difuminado */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={bannerUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-110"
+              />
+              {/* Imagen principal completa sin recortes */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={bannerUrl}
+                alt="Fondo de pantalla del workspace"
+                className="relative w-full h-full object-contain"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0d1117]/80 via-transparent to-transparent pointer-events-none" />
+            </>
           ) : (
             <div className="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-zinc-900/40 to-transparent flex items-center justify-center">
               <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
@@ -315,16 +375,16 @@ export function ProfileSettingsModal({
           )}
 
           {/* Botones de Acción de Portada */}
-          <div className="absolute top-3 right-12 flex items-center gap-2">
+          <div className="absolute top-2.5 right-11 flex items-center gap-1.5 z-10">
             {bannerUrl && (
               <button
                 type="button"
                 onClick={handleRemoveBanner}
                 title="Quitar fondo y volver al tema oscuro nativo"
-                className="p-2 rounded-xl bg-black/70 hover:bg-rose-500/20 hover:text-rose-300 text-zinc-300 border border-white/10 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                className="p-1.5 rounded-lg bg-black/70 hover:bg-rose-500/20 hover:text-rose-300 text-zinc-300 border border-white/10 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Quitar Fondo</span>
+                <span className="hidden sm:inline">Quitar</span>
               </button>
             )}
 
@@ -332,8 +392,8 @@ export function ProfileSettingsModal({
               type="button"
               onClick={() => bannerInputRef.current?.click()}
               disabled={uploadingBanner}
-              title="Subir fondo de pantalla personalizado (Full HD WebP)"
-              className="p-2 rounded-xl bg-black/70 hover:bg-black/90 text-zinc-200 hover:text-white border border-white/15 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md"
+              title="Subir nuevo fondo de pantalla (2K QHD WebP)"
+              className="p-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-500/40 backdrop-blur-md text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md"
             >
               {uploadingBanner ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -357,15 +417,15 @@ export function ProfileSettingsModal({
             type="button"
             onClick={onClose}
             title="Cerrar modal"
-            className="absolute top-3 right-3 p-2 rounded-xl bg-black/70 hover:bg-black/90 text-zinc-400 hover:text-white border border-white/10 backdrop-blur-md transition cursor-pointer"
+            className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/70 hover:bg-black/90 text-zinc-400 hover:text-white border border-white/10 backdrop-blur-md transition cursor-pointer z-10"
           >
             <X className="w-4 h-4" />
           </button>
 
           {/* Avatar Superpuesto */}
-          <div className="absolute -bottom-6 left-6 flex items-end gap-3">
+          <div className="absolute -bottom-5 left-5 flex items-end gap-3 z-10">
             <div className="relative group">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-zinc-900 border-2 border-indigo-500/60 shadow-2xl overflow-hidden flex items-center justify-center">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-zinc-900 border-2 border-indigo-500/60 shadow-2xl overflow-hidden flex items-center justify-center">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -374,7 +434,7 @@ export function ProfileSettingsModal({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-xl sm:text-2xl font-bold text-indigo-400 font-mono">
+                  <span className="text-lg sm:text-xl font-bold text-indigo-400 font-mono">
                     {userInitials}
                   </span>
                 )}
@@ -412,7 +472,7 @@ export function ProfileSettingsModal({
                 type="button"
                 onClick={handleRemoveAvatar}
                 title="Quitar foto y usar iniciales"
-                className="mb-1 p-1.5 rounded-lg bg-zinc-900/90 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 border border-white/10 transition cursor-pointer text-[10px] font-mono"
+                className="mb-1 p-1 rounded-lg bg-zinc-900/90 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 border border-white/10 transition cursor-pointer text-[10px] font-mono"
               >
                 <Trash2 className="w-3 h-3" />
               </button>
@@ -421,7 +481,7 @@ export function ProfileSettingsModal({
         </div>
 
         {/* Navegación por Pestañas */}
-        <div className="pt-8 px-6 border-b border-white/10 flex items-center gap-6 bg-[#161b22]/40">
+        <div className="pt-7 px-6 border-b border-white/10 flex items-center gap-6 bg-[#161b22]/40">
           <button
             type="button"
             onClick={() => setActiveTab("general")}
@@ -500,6 +560,54 @@ export function ProfileSettingsModal({
                 />
               </div>
 
+              {/* Galería de Mis Fondos Guardados */}
+              {savedWallpapers.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <FolderHeart className="w-4 h-4 text-indigo-400" />
+                    <label className="text-xs font-semibold text-zinc-200">
+                      Mis Fondos Guardados ({savedWallpapers.length})
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {savedWallpapers.map((url, idx) => {
+                      const isSelected = bannerUrl === url;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => handleSelectWallpaper(url)}
+                          className={`group relative h-20 rounded-xl border overflow-hidden p-2 flex flex-col justify-between transition cursor-pointer ${
+                            isSelected
+                              ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-lg"
+                              : "border-white/10 hover:border-white/30"
+                          }`}
+                        >
+                          <div
+                            className="absolute inset-0 bg-cover bg-center transition-transform group-hover:scale-105"
+                            style={{ backgroundImage: `url(${url})` }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                          {/* Boton Eliminar Fondo Guardado */}
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteSavedWallpaper(url, e)}
+                            title="Eliminar de mi colección"
+                            className="relative z-10 self-end p-1 rounded-md bg-black/60 hover:bg-rose-500/30 text-zinc-400 hover:text-rose-300 opacity-0 group-hover:opacity-100 transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+
+                          <span className="relative z-10 text-[10px] font-mono text-zinc-300 font-bold truncate">
+                            {isSelected ? "Activo" : `Fondo ${idx + 1}`}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Galería de Fondos Prediseñados */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-2">
@@ -516,7 +624,7 @@ export function ProfileSettingsModal({
                         key={preset.id}
                         type="button"
                         onClick={() =>
-                          handleSelectPreset(preset.url, preset.name)
+                          handleSelectWallpaper(preset.url, preset.name)
                         }
                         className={`group relative h-20 rounded-xl border overflow-hidden p-2 flex flex-col justify-end transition cursor-pointer ${
                           isSelected
