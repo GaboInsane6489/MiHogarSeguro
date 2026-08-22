@@ -1,19 +1,25 @@
 # Second Brain - Sistema Operativo de Ejecución Diaria & Copiloto Cognitivo
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.3.0-black?style=flat-square&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.2.8-blue?style=flat-square&logo=react)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.3.3-38bdf8?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_%26_Storage-3ecf8e?style=flat-square&logo=supabase)](https://supabase.com/)
-[![Google Gemini](https://img.shields.io/badge/Google_Gemini-3.6_Flash-8b5cf6?style=flat-square&logo=google)](https://ai.google.dev/)
-[![n8n](https://img.shields.io/badge/n8n-Automation-ff6d5a?style=flat-square&logo=n8n)](https://n8n.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+<div align="center">
+
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.0-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.2.8-20232a?style=for-the-badge&logo=react&logoColor=61dafb)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.3.3-0f172a?style=for-the-badge&logo=tailwindcss&logoColor=38bdf8)](https://tailwindcss.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_%26_Storage-1c1c1c?style=for-the-badge&logo=supabase&logoColor=3ecf8e)](https://supabase.com/)
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-3.6_Flash-4c1d95?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![n8n](https://img.shields.io/badge/n8n-Automation-ea580c?style=for-the-badge&logo=n8n&logoColor=white)](https://n8n.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+**[Documentación](file:///c:/GithubProjects/mi-app-diaria/README.md)** • **[Guía de Contribución](file:///c:/GithubProjects/mi-app-diaria/CONTRIBUTING.md)** • **[Roadmap Oficial & Changelog](file:///c:/GithubProjects/mi-app-diaria/ROADMAP.md)** • **[Licencia MIT](file:///c:/GithubProjects/mi-app-diaria/LICENSE)**
+
+</div>
 
 ---
 
 ## 1. Descripción General
 
-**Second Brain** es un sistema operativo de productividad personal, ejecución diaria y gestión de conocimiento construido con estética dark mode inspirada en *Linear* y *Raycast*. Integra un **Copiloto AI Universal** conectado a Google Gemini (serie 3.x), un motor de desgloses de subtareas contextualizadas, almacenamiento relacional en Supabase con autenticación y Row Level Security (RLS), optimización y compresión de multimedia en cliente a WebP, y flujos de automatización programada en n8n conectados con Telegram.
+**Second Brain** es un sistema operativo de productividad personal, ejecución diaria y gestión de conocimiento construido con estética *Dark Titanium* inspirada en *Linear* y *Raycast*. Integra un **Copiloto AI Universal** conectado a Google Gemini (serie 3.x), un motor de desgloses de subtareas contextualizadas, almacenamiento relacional en Supabase con autenticación y Row Level Security (RLS), optimización y compresión de imágenes en cliente a formato WebP, y flujos de automatización programada en n8n conectados con Telegram.
 
 ---
 
@@ -23,7 +29,7 @@
 graph TD
     Client["Cliente Frontend (Next.js 16 + React 19 + Tailwind v4)"]
     Optimizer["Compresión WebP en Cliente (HTML5 Canvas)"]
-    API_Chat["Route Handler: /api/chat (Copiloto AI)"]
+    API_Chat["Route Handler: /api/chat (Copiloto AI Centralizado)"]
     API_Gen["Route Handler: /api/generate (Desglose Contextualizado)"]
     API_Web["Route Handler: /api/webhook/n8n (Ingesta y Briefing)"]
     SupaAuth["Supabase Auth Gate (Email / Password)"]
@@ -77,125 +83,129 @@ La aplicación organiza la captura y ejecución mediante una matriz cruzada de 5
 
 ## 4. Características Principales
 
-### A. Copiloto AI Universal (`/api/chat`)
-* **Asistente Conversacional Integral:** Responde dudas sobre desarrollo, fitness, finanzas, estudio o tus propias tareas activas.
-* **Acción Interactiva de Creación de Tareas:** Genera bloques estructurados `task_action` con un botón `[+ Agregar a mi Workspace]` para insertar tareas en Supabase con 1 clic sin salir del chat.
+### A. Copiloto AI Centralizado (`SecondBrainChatDrawer.tsx` & `/api/chat`)
+* **Consola Ejecutiva Flotante:** Modal centralizado espacioso con estado en vivo (*Online*), conteo de tareas activas en memoria y persistencia de conversación.
+* **Acción Interactiva de Creación de Tareas:** Detección de intenciones que genera tarjetas interactivas de tareas con un botón `+ Agregar a mi Workspace` para insertar tareas en Supabase con 1 clic sin salir del chat.
 
-### B. Modal de Perfil & Contexto de IA (`ProfileSettingsModal.tsx`)
-* **Header Visual con Banner y Avatar:** Portada panorámica y foto de perfil en tiempo real.
-* **Optimización WebP en Cliente:** Compresión en canvas antes de la subida a Supabase Storage (< 150 KB por imagen) para carga instantánea y cero sobrecosto de ancho de banda.
-* **Contexto de IA Persistente:** Configuración de Profesión/Rol, Metas Principales y Directivas de Estilo que personalizan automáticamente el tono de Gemini en toda la aplicación.
+### B. Modal Centralizado de Tareas & Desglose Contextual (`EntryDetailDrawer.tsx`)
+* **Edición Integral:** Fecha límite (`due_date`), prioridad con banderas de color, área y horizonte.
+* **Desglose Estructurado con Directivas de Usuario:** Botón `+ Contexto IA` para ingresar directivas personalizadas antes de invocar a Gemini.
+* **Galería Multimedia:** Carga de archivos adjuntos con miniaturas en Supabase Storage.
 
-### C. Desglose de Subtareas con Contexto de Usuario
-* En el drawer de detalle de cada tarea (`EntryDetailDrawer.tsx`), el usuario puede especificar directivas precisas (ej: *"Formato APA, 3 entregas y rúbrica del profesor"*) para que la IA genere un desglose exacto y accionable.
+### C. Ajustes de Perfil & Fondo Fijo Personalizado (`ProfileSettingsModal.tsx`)
+* **Wallpaper y Avatar con Compresión en Cliente:** Motor canvas de optimización a formato WebP (< 150 KB).
+* **Fondo de Pantalla Fijo con Paneles de Alto Contraste:** El wallpaper cargado luce de fondo mientras todo el workspace flota con legibilidad cristalina y nítida.
+* **Contexto de IA Persistente:** Configuración de Profesión/Rol, Metas Principales y Directivas de Estilo que personalizan automáticamente el tono de Gemini.
 
-### D. Refinamiento Visual y Micro-Interacciones
-* Bordes laterales de acento por área en cada tarea.
-* Badges de conteo de tareas pendientes en tiempo real en la barra lateral.
-* Micro-indicador de progreso de subtareas (`3/5 listas`).
-* Fechas límite (`due_date`) con estados de vencimiento (*Vencida*, *Vence Hoy*, *Fecha*).
-* Subida de archivos adjuntos a Supabase Storage.
-
----
-
-## 5. Especificación de Endpoints Backend
-
-### 1. `/api/chat` (POST)
-Endpoint de conversación del Copiloto AI. Inyecta el perfil del usuario y sus tareas activas en el prompt de Gemini.
-
-* **Payload:**
-  ```json
-  {
-    "messages": [
-      { "role": "user", "content": "¿Qué pendientes tengo para hoy y anota planificar la reunión?" }
-    ],
-    "tasks": [ ... ],
-    "aiContext": {
-      "profession": "Desarrollador Full-Stack",
-      "goals": "Lanzar SaaS",
-      "custom_instructions": "Respuestas concisas"
-    }
-  }
-  ```
-* **Respuesta:** Texto formateado con soporte para bloques `task_action`.
-
-### 2. `/api/generate` (POST)
-Endpoint para sugerencias de títulos y desgloses estructurados en bloques heterogéneos (`heading`, `paragraph`, `todo`, `bullet`, `code`, `callout`).
-
-* **Payload (Desglose con Contexto de Usuario):**
-  ```json
-  {
-    "mode": "breakdown",
-    "input": "Proyecto Final de Algoritmos",
-    "area": "universidad",
-    "horizon": "mediano",
-    "userNotes": "Normas IEEE, lenguaje Rust, 4 fases de entrega",
-    "aiContext": { ... }
-  }
-  ```
-
-### 3. `/api/webhook/n8n` (GET / POST)
-Endpoint autenticado mediante cabecera `x-n8n-api-key` para integración con flujos de n8n y bots de Telegram.
+### D. Experiencia Multi-Dispositivo & Responsive
+* **Command Hub Móvil de Pantalla Completa:** Menú táctil para smartphones con acceso rápido a las 5 áreas, horizontes y copiloto.
+* **Sidebar Fijo en Escritorio:** Ancho optimizado de 80px (colapsado) y 256px (expandido) para flujo de trabajo ágil.
 
 ---
 
-## 6. Instalación y Configuración Local
+## 5. Pila Tecnológica
 
-### Requisitos Previos
-* **Node.js**: v20 o superior
-* **pnpm**: v10 o v11
-* **Supabase**: Proyecto activo con PostgreSQL y Storage
-* **Google AI Studio**: API Key con acceso a modelos Gemini 3.x
-
-### Pasos de Instalación
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/GaboInsane6489/MiHogarSeguro.git
-   cd MiHogarSeguro
-   ```
-
-2. **Instalar dependencias:**
-   ```bash
-   pnpm install
-   ```
-
-3. **Configurar variables de entorno:**
-   Crear el archivo `.env.local` basado en `.env.example`:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
-   GEMINI_API_KEY=tu_gemini_api_key
-   N8N_API_KEY=tu_token_secreto_para_n8n
-   ```
-
-4. **Aplicar migraciones en Supabase:**
-   Ejecutar los scripts de la carpeta `supabase/migrations/` en el SQL Editor de Supabase:
-   * `20260815_create_entries_table.sql`
-   * `20260821_create_profiles_table.sql`
-   * `20260822_profile_banner.sql`
-
-5. **Configurar Supabase Storage:**
-   * Crear un bucket público llamado `entry-attachments`.
-   * Habilitar políticas de lectura pública e inserción/actualización autenticada.
-
-6. **Iniciar servidor de desarrollo:**
-   ```bash
-   pnpm run dev
-   ```
-   Abrir [http://localhost:3000](http://localhost:3000) en el navegador.
+* **Framework:** [Next.js 16 (App Router + Turbopack)](https://nextjs.org/)
+* **Librería de UI:** [React 19](https://react.dev/)
+* **Estilos:** [Tailwind CSS v4](https://tailwindcss.com/)
+* **Tipado:** [TypeScript 5.x](https://www.typescriptlang.org/)
+* **Base de Datos & Auth:** [Supabase (PostgreSQL + RLS + Storage)](https://supabase.com/)
+* **Inteligencia Artificial:** [Google GenAI SDK (Gemini 3.6 Flash / 3.7 / 3.6 Pro)](https://ai.google.dev/)
+* **Automatización Externa:** [n8n Workflow Engine](https://n8n.io/)
+* **Iconografía:** [Lucide React](https://lucide.dev/) + Isotipo Vectorial Oficial Second Brain
 
 ---
 
-## 7. Automatización con n8n y Telegram
+## 6. Instalación y Puesta en Marcha
 
-* **Workflow Blueprint:** `docs/n8n_daily_briefing_workflow.json`
-* **Guía de Configuración:** `docs/n8n_setup.md`
+### Prerrequisitos
+* Node.js >= 20.x
+* pnpm >= 9.x
+* Cuenta de Supabase con proyecto activo
+* API Key de Google Gemini
 
-El flujo consulta diariamente a las 06:00 AM las tareas del horizonte `hoy`, las agrupa por área y las envía formateadas a un chat de Telegram.
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/GaboInsane6489/MiHogarSeguro.git
+cd MiHogarSeguro
+```
+
+### 2. Instalar dependencias
+```bash
+pnpm install
+```
+
+### 3. Configurar variables de entorno
+Crea un archivo `.env.local` basado en `.env.example`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
+GEMINI_API_KEY=tu-gemini-api-key
+N8N_WEBHOOK_SECRET=tu-secreto-para-webhooks
+```
+
+### 4. Ejecutar migraciones de Supabase
+Aplica los esquemas SQL ubicados en `supabase/migrations/`:
+```bash
+# Ejecutar en el SQL Editor de tu Dashboard de Supabase
+supabase/migrations/20260822_profile_banner.sql
+```
+
+### 5. Iniciar el servidor de desarrollo
+```bash
+pnpm dev
+```
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ---
 
-## 8. Licencia
+## 7. Estructura del Repositorio
 
-Este proyecto está bajo los términos de la Licencia MIT. Consulte el archivo [LICENSE](LICENSE) para más información.
+```text
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── chat/route.ts          # Endpoint del Copiloto AI
+│   │   │   ├── generate/route.ts      # Endpoint de desglose estructurado
+│   │   │   └── webhook/n8n/route.ts   # Endpoint de integración con n8n
+│   │   ├── globals.css                # Tokens de Tailwind v4 y estilos base
+│   │   ├── layout.tsx                 # Layout raíz con metadatos
+│   │   ├── login/page.tsx             # Pantalla de autenticación
+│   │   └── page.tsx                   # Workspace principal de ejecución
+│   ├── components/
+│   │   ├── AiTaskInput.tsx            # Formulario de captura rápida
+│   │   ├── AuthModal.tsx              # Modal de login/registro
+│   │   ├── BrandLogo.tsx              # Isotipo vectorial con IDs únicos
+│   │   ├── EntryDetailDrawer.tsx      # Modal centralizado de detalle de tarea
+│   │   ├── ProfileSettingsModal.tsx   # Modal de perfil y contexto de IA
+│   │   ├── SecondBrainChatDrawer.tsx  # Modal centralizado de Copiloto AI
+│   │   └── Sidebar.tsx                # Navegación unificada desktop/móvil
+│   ├── lib/
+│   │   ├── imageOptimizer.ts          # Compresión Canvas WebP en cliente
+│   │   └── supabase.ts                # Clientes Supabase browser y admin
+│   └── types/
+│       └── database.types.ts          # Tipos TypeScript de Supabase y esquemas
+├── supabase/
+│   └── migrations/                    # Scripts SQL de migraciones
+├── CONTRIBUTING.md                    # Guía para desarrolladores y flujo Git
+├── ROADMAP.md                         # Registro de objetivos y changelog
+├── LICENSE                            # Licencia MIT
+└── README.md                          # Documento principal del repositorio
+```
+
+---
+
+## 8. Roadmap & Objetivos Futuros
+
+Consulta nuestro documento **[ROADMAP.md](file:///c:/GithubProjects/mi-app-diaria/ROADMAP.md)** para conocer el plan de evolución que incluye:
+* Copiloto Autónomo con llamadas a funciones (*Function Calling*).
+* Captura directa con cámara móvil y OCR inteligente.
+* Gamificación con sistema de XP, niveles y Leaderboard social de productividad.
+* Módulos dedicados con rutas especializadas para Gimnasio (`/gym`), Cashea/Finanzas (`/finance`) y Universidad (`/university`).
+
+---
+
+## 9. Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo **[LICENSE](file:///c:/GithubProjects/mi-app-diaria/LICENSE)** para más detalles.
