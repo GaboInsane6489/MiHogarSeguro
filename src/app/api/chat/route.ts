@@ -14,10 +14,10 @@ interface ChatPayload {
 }
 
 const FALLBACK_MODELS = [
-  "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-pro",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-pro-latest",
+  "gemini-2.0-flash-lite-preview-02-05",
 ];
 
 async function generateChatWithFallback(
@@ -41,7 +41,8 @@ async function generateChatWithFallback(
       return response;
     } catch (error) {
       lastError = error;
-      console.warn(`Aviso: Modelo ${model} no disponible en chat, probando siguiente modelo de respaldo...`);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`Aviso en chat: Modelo ${model} devolvió error (${errorMsg}), intentando con siguiente modelo...`);
     }
   }
 
